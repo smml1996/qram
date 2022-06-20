@@ -1,0 +1,56 @@
+from typing import List, Optional, Dict
+from settings import *
+from utils import *
+from qiskit import QuantumRegister, QuantumCircuit
+
+
+class QWord:
+    """
+    This class is a general abstraction of a piece of memory. This class group qubits to represent
+    a variable/constant and change its value as required.
+    """
+    size_in_bits: int
+    name: str
+    actual: Optional
+    previous: Optional
+    is_actual_constant: List[int]
+    is_previous_constant: List[int]
+
+    def __init__(self, name, size_in_bits: int = 64):
+
+        self.is_actual_constant = [0 for _ in range(size_in_bits)]
+        # self.is_previous_constant = [0 for _ in range(size_in_bits)]
+        self.size_in_bits = size_in_bits
+        self.name = name
+
+
+    def __repr__(self):
+        return self.name
+
+    def create_state(self, circuit: QuantumCircuit) -> QuantumRegister:
+        self.actual = QuantumRegister(self.size_in_bits, name=self.name)
+        self.previous = QuantumRegister(self.size_in_bits, name=self.name)
+        circuit.add_register(self.actual)
+        #circuit.add_register(self.previous)
+        return self.actual
+
+    def is_actual_bit_constant(self, bit_index) -> bool:
+        return self.is_actual_constant[bit_index] != -1
+
+    def is_previous_bit_constant(self, bit_index) -> bool:
+        return self.is_previous_constant[bit_index] != -1
+
+    def force_current_state(self, current_state, are_constants):
+        self.current = current_state
+        self.is_actual_constant = are_constants
+
+    @staticmethod
+    def are_all_constants(values):
+        for i in values:
+            if i == -1:
+                return False
+        return True
+
+
+
+
