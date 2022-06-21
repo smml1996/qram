@@ -1,6 +1,7 @@
+from collections import Set
+
 from qword import *
 from qword_tools import *
-from qiskit import Qubit
 
 
 class Instruction:
@@ -11,6 +12,7 @@ class Instruction:
     inputs: List[QWord] = []
     circuit = QuantumCircuit()
     created_nids: Dict[int, QWord] = dict()
+    created_nids_in_timestep: set = set()
     ancillas: Dict[int, QuantumRegister] = dict()
     # model settings
 
@@ -139,6 +141,7 @@ class Instruction:
         Instruction.circuit = QuantumCircuit()
         Instruction.created_nids = dict()
         Instruction.ancillas = dict()
+        Instruction.created_nids_in_timestep = set()
 
     @staticmethod
     def or_bad_states():
@@ -285,6 +288,9 @@ class Uext(Instruction):
         ext_value = int(self.instruction[4])
 
         assert sort == ext_value + previous_qword.size_in_bits
+        if self.id not in self.created_nids.keys():
+            dummy_register = QuantumRegister(ext_value)
+            self.ancillas[self.id] = dummy_register
 
         result_qubits = []
 
@@ -292,9 +298,7 @@ class Uext(Instruction):
             result_qubits.append(qubit)
             constants[i] = constants_op[i]
 
-        dummy_register = QuantumRegister(ext_value)
-
-        for qubit in dummy_register:
+        for qubit in self.ancillas[self.id]:
             result_qubits.append(qubit)
 
         result = QWord(self.register_name, sort)
@@ -311,7 +315,8 @@ class And(Instruction):
         bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(0)
         result_qword = self.created_nids[self.id]
         assert(result_qword.size_in_bits == self.get_sort())
-        optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, self.circuit)
+        if self.id not in self.created_nids_in_timestep:
+            optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, self.circuit)
         return result_qword
 
 
@@ -325,12 +330,13 @@ class Not(Instruction):
             self.created_nids[self.id] = QWord(self.register_name, sort)
             self.created_nids[self.id].create_state(self.circuit)
 
-        operand1 = Instruction(self.get_instruction_at_index(3))
-        operand1_qword = operand1.execute()
-        x, constants = self.get_last_qubitset(operand1.name, operand1_qword)
-        optimized_bitwise_not(x, self.created_nids[self.id].actual, constants,
-                              self.created_nids[self.id].is_actual_constant,
-                              self.circuit)
+        if self.id not in self.created_nids_in_timestep:
+            operand1 = Instruction(self.get_instruction_at_index(3))
+            operand1_qword = operand1.execute()
+            x, constants = self.get_last_qubitset(operand1.name, operand1_qword)
+            optimized_bitwise_not(x, self.created_nids[self.id].actual, constants,
+                                  self.created_nids[self.id].is_actual_constant,
+                                  self.circuit)
         return self.created_nids[self.id]
 
 
@@ -341,11 +347,11 @@ class Eq(Instruction):
     def execute(self) -> QWord:
         sort = self.get_sort()
         bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
-
-        ancillas = self.ancillas[self.id]
-        self.circuit.x(ancillas[ancillas.size - 1])
         result_qword = self.created_nids[self.id]
-        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
+        ancillas = self.ancillas[self.id]
+        if self.id not in self.created_nids_in_timestep:
+            self.circuit.x(ancillas[ancillas.size - 1])
+            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
         return result_qword
 
 
@@ -359,13 +365,15 @@ class Neq(Instruction):
         bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
         result_qword = self.created_nids[self.id]
         ancillas = self.ancillas[self.id]
-        self.circuit.x(ancillas[ancillas.size - 1])
-        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
-        assert(result_qword.size_in_bits == 1)
-        self.circuit.x(result_qword.actual[0])
-        if result_qword.is_actual_constant[0] != -1:
-            result_qword.is_actual_constant[0] += 1
-            result_qword.is_actual_constant[0] = int(result_qword.is_actual_constant[0] % 2)
+
+        if self.id not in self.created_nids_in_timestep:
+            self.circuit.x(ancillas[ancillas.size - 1])
+            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
+            assert(result_qword.size_in_bits == 1)
+            self.circuit.x(result_qword.actual[0])
+            if result_qword.is_actual_constant[0] != -1:
+                result_qword.is_actual_constant[0] += 1
+                result_qword.is_actual_constant[0] = int(result_qword.is_actual_constant[0] % 2)
         return result_qword
 
 
@@ -406,32 +414,34 @@ class Udiv(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        operand1 = Instruction(self.get_instruction_at_index(3))
-        operand1_qword = operand1.execute()
+        if self.id not in self.created_nids_in_timestep:
+            operand1 = Instruction(self.get_instruction_at_index(3))
+            operand1_qword = operand1.execute()
 
-        operand2 = Instruction(self.get_instruction_at_index(4))
-        operand2_qword = operand2.execute()
+            operand2 = Instruction(self.get_instruction_at_index(4))
+            operand2_qword = operand2.execute()
 
-        bitset1, are_constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
-        bitset2, are_constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
-        assert len(bitset1) == len(bitset2)
-        if QWord.are_all_constants(are_constants1) and QWord.are_all_constants(are_constants2):
-            bitset1_in_decimal = get_decimal_representation(are_constants1)
-            bitset2_in_decimal = get_decimal_representation(are_constants2)
-            result_in_decimal = bitset1_in_decimal // bitset2_in_decimal
+            bitset1, are_constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
+            bitset2, are_constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
+            assert len(bitset1) == len(bitset2)
+            if QWord.are_all_constants(are_constants1) and QWord.are_all_constants(are_constants2):
+                bitset1_in_decimal = get_decimal_representation(are_constants1)
+                bitset2_in_decimal = get_decimal_representation(are_constants2)
+                result_in_decimal = bitset1_in_decimal // bitset2_in_decimal
 
-            result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
-            if self.id not in self.created_nids.keys():
-                self.created_nids[self.id] = QWord(self.register_name, self.get_sort())
-                self.created_nids[self.id].create_state(self.circuit)
+                result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
+                if self.id not in self.created_nids.keys():
+                    self.created_nids[self.id] = QWord(self.register_name, self.get_sort())
+                    self.created_nids[self.id].create_state(self.circuit)
 
-            for (index, res) in enumerate(result_in_binary):
-                assert (self.created_nids[self.id].is_actual_constant[index] == 0)
-                self.circuit.x(self.created_nids[self.id].actual[index])
-                self.created_nids[self.id].is_actual_constant[index] = 1
-            return self.created_nids[self.id]
-        else:
-            raise Exception("non constant operands on UREM not implemented")
+                for (index, res) in enumerate(result_in_binary):
+                    assert (self.created_nids[self.id].is_actual_constant[index] == 0)
+                    self.circuit.x(self.created_nids[self.id].actual[index])
+                    self.created_nids[self.id].is_actual_constant[index] = 1
+
+            else:
+                raise Exception("non constant operands on UREM not implemented")
+        return self.created_nids[self.id]
 
 
 class Urem(Instruction):
@@ -439,33 +449,33 @@ class Urem(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
+        if self.id not in self.created_nids_in_timestep:
+            operand1 = Instruction(self.get_instruction_at_index(3))
+            operand1_qword = operand1.execute()
 
-        operand1 = Instruction(self.get_instruction_at_index(3))
-        operand1_qword = operand1.execute()
+            operand2 = Instruction(self.get_instruction_at_index(4))
+            operand2_qword = operand2.execute()
 
-        operand2 = Instruction(self.get_instruction_at_index(4))
-        operand2_qword = operand2.execute()
+            bitset1, are_constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
+            bitset2, are_constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
+            assert len(bitset1) == len(bitset2)
+            if QWord.are_all_constants(are_constants1) and QWord.are_all_constants(are_constants2):
+                bitset1_in_decimal = get_decimal_representation(are_constants1)
+                bitset2_in_decimal = get_decimal_representation(are_constants2)
+                result_in_decimal = bitset1_in_decimal % bitset2_in_decimal
 
-        bitset1, are_constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
-        bitset2, are_constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
-        assert len(bitset1) == len(bitset2)
-        if QWord.are_all_constants(are_constants1) and QWord.are_all_constants(are_constants2):
-            bitset1_in_decimal = get_decimal_representation(are_constants1)
-            bitset2_in_decimal = get_decimal_representation(are_constants2)
-            result_in_decimal = bitset1_in_decimal % bitset2_in_decimal
+                result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
+                if self.id not in self.created_nids.keys():
+                    self.created_nids[self.id] = QWord(self.register_name, self.get_sort())
+                    self.created_nids[self.id].create_state(self.circuit)
 
-            result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
-            if self.id not in self.created_nids.keys():
-                self.created_nids[self.id] = QWord(self.register_name, self.get_sort())
-                self.created_nids[self.id].create_state(self.circuit)
-
-            for (index, res) in enumerate(result_in_binary):
-                assert(self.created_nids[self.id].is_actual_constant[index] == 0)
-                self.circuit.x(self.created_nids[self.id].actual[index])
-                self.created_nids[self.id].is_actual_constant[index] = 1
-            return self.created_nids[self.id]
-        else:
-            raise Exception("non constant operands on UREM not implemented")
+                for (index, res) in enumerate(result_in_binary):
+                    assert(self.created_nids[self.id].is_actual_constant[index] == 0)
+                    self.circuit.x(self.created_nids[self.id].actual[index])
+                    self.created_nids[self.id].is_actual_constant[index] = 1
+            else:
+                raise Exception("non constant operands on UREM not implemented")
+        return self.created_nids[self.id]
 
 
 class Bad(Instruction):
