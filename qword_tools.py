@@ -62,8 +62,14 @@ def optimized_is_equal(bitset1: QuantumRegister, bitset2: QuantumRegister, resul
                 circuit.cx(dummy_logic_one, ancillas[i])
                 circuit.cx(bitset1[i], ancillas[i])
                 circuit.cx(bitset2[i], ancillas[i])
-        gate = MCXGate(len(control_qubits)+1)
-        control_qubits.append(result_qword.actual[0])
-        circuit.append(gate, control_qubits)
+
+        if len(control_qubits) > 0:
+            gate = MCXGate(len(control_qubits))
+            control_qubits.append(result_qword.actual[0])
+            circuit.append(gate, control_qubits)
+            result_qword.is_actual_constant[0] = -1
+        else:
+            result_qword.is_actual_constant[0] = 1
+            circuit.x(result_qword.actual[0])
         return result_qword.actual
 

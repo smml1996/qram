@@ -10,7 +10,7 @@ class Instruction:
     inputs: List[QWord] = []
     circuit = QuantumCircuit()
     created_nids: Dict[int, QWord] = dict()
-    eq_ancillas: Dict[int, QuantumRegister] = dict()
+    ancillas: Dict[int, QuantumRegister] = dict()
     # model settings
 
     # END static attributes
@@ -98,6 +98,27 @@ class Instruction:
 
         return qword.actual, qword.is_actual_constant
 
+    def get_data_2_operands(self):
+        operand1 = Instruction(self.get_instruction_at_index(3))
+        operand1_qword = operand1.execute()
+
+        operand2 = Instruction(self.get_instruction_at_index(4))
+        operand2_qword = operand2.execute()
+
+        bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
+        bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
+
+        if self.id not in self.created_nids.keys():
+            self.created_nids[self.id] = QWord(self.register_name, 1)
+            sort = self.get_sort()
+            ancillas = QuantumRegister(sort + 1)
+            self.ancillas[self.id] = ancillas
+            self.circuit.add_register(ancillas)
+            self.circuit.x(ancillas[ancillas.size - 1])
+
+        return bitset1, constants1, bitset2, constants2
+
+
     @property
     def specific_subclass(self) -> object:
         if self.base_class is None:
@@ -118,7 +139,7 @@ class Instruction:
         Instruction.input_nids = []
         Instruction.circuit = QuantumCircuit()
         Instruction.created_nids = dict()
-        Instruction.eq_ancillas = dict()
+        Instruction.ancillas = dict()
     @staticmethod
     def or_bad_states():
         raise Exception("missing implementation")
@@ -281,7 +302,8 @@ class Not(Instruction):
         operand1 = Instruction(self.get_instruction_at_index(3))
         operand1_qword = operand1.execute()
         x, constants = self.get_last_qubitset(operand1.name, operand1_qword)
-        optimized_bitwise_not(x, self.created_nids[self.id].actual, constants, self.created_nids[self.id].is_actual_constant,
+        optimized_bitwise_not(x, self.created_nids[self.id].actual, constants,
+                              self.created_nids[self.id].is_actual_constant,
                               self.circuit)
         return self.created_nids[self.id]
 
@@ -291,27 +313,9 @@ class Eq(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        operand1 = Instruction(self.get_instruction_at_index(3))
-        operand1_qword = operand1.execute()
-
-        operand2 = Instruction(self.get_instruction_at_index(4))
-        operand2_qword = operand2.execute()
-
-        bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
-        bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
-
-        if self.id not in self.created_nids.keys():
-
-            self.created_nids[self.id] = QWord(self.register_name, 1)
-            sort = self.get_sort()
-            ancillas = QuantumRegister(sort+1)
-            self.eq_ancillas[self.id] = ancillas
-            self.circuit.add_register(ancillas)
-            self.circuit.x(ancillas[ancillas.size-1])
-
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands()
         result_qword = self.created_nids[self.id]
-        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, self.eq_ancillas[self.id])
-
+        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, self.ancillas[self.id])
         return result_qword
 
 
@@ -324,7 +328,15 @@ class Neq(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        raise Exception("missing implementation")
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands()
+        result_qword = self.created_nids[self.id]
+        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, self.ancillas[self.id])
+        assert(result_qword.size_in_bits == 1)
+        self.circuit.x(result_qword.actual[0])
+        if result_qword.is_actual_constant[0] != -1:
+            result_qword.is_actual_constant[0]+=1
+            result_qword.is_actual_constant[0] = int(result_qword.is_actual_constant[0] % 2)
+        return result_qword
 
 
 class Ult(Instruction):
