@@ -10,6 +10,7 @@ class Instruction:
     inputs: List[QWord] = []
     circuit = QuantumCircuit()
     created_nids: Dict[int, QWord] = dict()
+    eq_ancillas: Dict[int, QuantumRegister] = dict()
     # model settings
 
     # END static attributes
@@ -117,7 +118,7 @@ class Instruction:
         Instruction.input_nids = []
         Instruction.circuit = QuantumCircuit()
         Instruction.created_nids = dict()
-
+        Instruction.eq_ancillas = dict()
     @staticmethod
     def or_bad_states():
         raise Exception("missing implementation")
@@ -289,8 +290,32 @@ class Eq(Instruction):
     def __init__(self, instruction):
         super().__init__(instruction)
 
-    def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+    def execute(self) -> QWord:
+        operand1 = Instruction(self.get_instruction_at_index(3))
+        operand1_qword = operand1.execute()
+
+        operand2 = Instruction(self.get_instruction_at_index(4))
+        operand2_qword = operand2.execute()
+
+        bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
+        bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
+
+        if self.id not in self.created_nids.keys():
+
+            self.created_nids[self.id] = QWord(self.register_name, 1)
+            sort = self.get_sort()
+            ancillas = QuantumRegister(sort+1)
+            self.eq_ancillas[self.id] = ancillas
+            self.circuit.add_register(ancillas)
+            self.circuit.x(ancillas[ancillas.size-1])
+
+        result_qword = self.created_nids[self.id]
+        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, self.eq_ancillas[self.id])
+
+        return result_qword
+
+
+
 
 
 class Neq(Instruction):
