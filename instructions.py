@@ -1,5 +1,5 @@
-from qiskit import QuantumCircuit
 from qword import *
+from qword_tools import *
 
 
 class Instruction:
@@ -151,10 +151,10 @@ class Input(Instruction):
     def execute(self) -> QWord:
         sort = self.get_sort()
         qword = QWord(self.register_name, sort)
-        qword.create_state(self.circuit)
-        self.circuit.h(qword.actual)
+        qword.create_state(self.circuit, set_previous=True)
+        self.circuit.h(qword.previous)
         for i in range(sort):
-            qword.is_actual_constant[i] = -1
+            qword.is_previous_constant[i] = -1
         self.inputs.append(qword)
         self.created_nids[self.id] = qword
         return qword
@@ -185,7 +185,7 @@ class State(Instruction):
         if self.id in self.created_nids.keys():
             sort = self.get_sort()
             qword = QWord(self.register_name, sort)
-            qword.create_state(self.circuit)
+            qword.create_state(self.circuit, set_previous=True)
 
             # returns a vector full of zeros, we use this to initialize memory with zeros
             bit_representation = get_bit_repr_of_number(0, qword.size_in_bits)
@@ -208,9 +208,10 @@ class State(Instruction):
                 for (index, value) in enumerate(bit_representation):
                     assert(value == 1 or value == 0)
                     if value == 1:
-                        assert(qword.is_actual_constant[index] == 0)
-                        self.circuit.x(qword.actual[index])
-                        qword.is_actual_constant[index] = 1
+                        assert(qword.is_previous_constant[index] == 0)
+                        self.circuit.x(qword.previous[index])
+                        qword.is_previous_constant[index] = 1
+                qword.force_current_state(qword.previous, qword.is_previous_constant)
         return Instruction.created_nids[self.id]
 
 
@@ -271,7 +272,17 @@ class Not(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        raise Exception("missing implementation")
+        sort = self.get_sort()
+        if self.id not in self.created_nids.keys():
+            self.created_nids[self.id] = QWord(self.register_name, sort)
+            self.created_nids[self.id].create_state(self.circuit)
+
+        operand1 = Instruction(self.get_instruction_at_index(3))
+        operand1_qword = operand1.execute()
+        x, constants = self.get_last_qubitset(operand1.name, operand1_qword)
+        optimized_bitwise_not(x, self.created_nids[self.id].actual, constants, self.created_nids[self.id].is_actual_constant,
+                              self.circuit)
+        return self.created_nids[self.id]
 
 
 class Eq(Instruction):

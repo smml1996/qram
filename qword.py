@@ -18,8 +18,7 @@ class QWord:
 
     def __init__(self, name, size_in_bits: int = 64):
 
-        self.is_actual_constant = [0 for _ in range(size_in_bits)]
-        # self.is_previous_constant = [0 for _ in range(size_in_bits)]
+
         self.size_in_bits = size_in_bits
         self.name = name
 
@@ -27,12 +26,18 @@ class QWord:
     def __repr__(self):
         return self.name
 
-    def create_state(self, circuit: QuantumCircuit) -> QuantumRegister:
-        self.actual = QuantumRegister(self.size_in_bits, name=self.name)
-        self.previous = QuantumRegister(self.size_in_bits, name=self.name)
-        circuit.add_register(self.actual)
-        #circuit.add_register(self.previous)
-        return self.actual
+    def create_state(self, circuit: QuantumCircuit, set_previous=False) -> QuantumRegister:
+
+        if set_previous:
+            self.is_previous_constant = [0 for _ in range(self.size_in_bits)]
+            self.previous = QuantumRegister(self.size_in_bits, name=self.name)
+            circuit.add_register(self.previous)
+            return self.previous
+        else:
+            self.actual = QuantumRegister(self.size_in_bits, name=self.name)
+            self.is_actual_constant = [0 for _ in range(self.size_in_bits)]
+            circuit.add_register(self.actual)
+            return self.actual
 
     def is_actual_bit_constant(self, bit_index) -> bool:
         return self.is_actual_constant[bit_index] != -1
