@@ -46,7 +46,7 @@ class QWord:
         return self.is_previous_constant[bit_index] != -1
 
     def force_current_state(self, current_state, are_constants):
-        self.current = current_state
+        self.actual = current_state
         self.is_actual_constant = are_constants
 
     @staticmethod

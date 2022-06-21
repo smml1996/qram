@@ -1,5 +1,6 @@
 from qword import *
 from qword_tools import *
+from qiskit import Qubit
 
 
 class Instruction:
@@ -17,7 +18,7 @@ class Instruction:
 
     def __init__(self, instruction: List[str]):
 
-        self.register_name= f"{instruction[0]}{instruction[1]}"
+        self.register_name = f"{instruction[0]}{instruction[1]}"
         self.instruction = instruction
         self.base_class = None
 
@@ -115,9 +116,7 @@ class Instruction:
                 self.ancillas[self.id] = ancillas
                 self.circuit.add_register(ancillas)
 
-
         return bitset1, constants1, bitset2, constants2
-
 
     @property
     def specific_subclass(self) -> object:
@@ -140,6 +139,7 @@ class Instruction:
         Instruction.circuit = QuantumCircuit()
         Instruction.created_nids = dict()
         Instruction.ancillas = dict()
+
     @staticmethod
     def or_bad_states():
         raise Exception("missing implementation")
@@ -276,7 +276,31 @@ class Uext(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+        sort = self.get_sort()
+        previous = Instruction(self.get_instruction_at_index(3))
+        previous_qword = previous.execute()
+        previous_qubits, constants_op = self.get_last_qubitset(previous.name, previous_qword)
+        constants = [0 for _ in range(sort)]
+
+        ext_value = int(self.instruction[4])
+
+        assert sort == ext_value + previous_qword.size_in_bits
+
+        result_qubits = []
+
+        for (i,qubit) in enumerate(previous_qubits):
+            result_qubits.append(qubit)
+            constants[i] = constants_op[i]
+
+        dummy_register = QuantumRegister(ext_value)
+
+        for qubit in dummy_register:
+            result_qubits.append(qubit)
+
+        result = QWord(self.register_name, sort)
+        result.force_current_state(result_qubits, constants)
+
+        return result
 
 
 class And(Instruction):
@@ -340,7 +364,7 @@ class Neq(Instruction):
         assert(result_qword.size_in_bits == 1)
         self.circuit.x(result_qword.actual[0])
         if result_qword.is_actual_constant[0] != -1:
-            result_qword.is_actual_constant[0]+=1
+            result_qword.is_actual_constant[0] += 1
             result_qword.is_actual_constant[0] = int(result_qword.is_actual_constant[0] % 2)
         return result_qword
 
