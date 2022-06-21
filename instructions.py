@@ -98,7 +98,7 @@ class Instruction:
 
         return qword.actual, qword.is_actual_constant
 
-    def get_data_2_operands(self):
+    def get_data_2_operands(self, ancilla_size):
         operand1 = Instruction(self.get_instruction_at_index(3))
         operand1_qword = operand1.execute()
 
@@ -110,11 +110,11 @@ class Instruction:
 
         if self.id not in self.created_nids.keys():
             self.created_nids[self.id] = QWord(self.register_name, 1)
-            sort = self.get_sort()
-            ancillas = QuantumRegister(sort + 1)
-            self.ancillas[self.id] = ancillas
-            self.circuit.add_register(ancillas)
-            self.circuit.x(ancillas[ancillas.size - 1])
+            if ancilla_size > 0:
+                ancillas = QuantumRegister(ancilla_size)
+                self.ancillas[self.id] = ancillas
+                self.circuit.add_register(ancillas)
+
 
         return bitset1, constants1, bitset2, constants2
 
@@ -247,8 +247,6 @@ class Next(Instruction):
 
 # Arithmetic operations
 class Add(Instruction):
-
-    # TODO: optimization
     def __init__(self, instruction):
         super(Add, self).__init__(instruction)
 
@@ -285,8 +283,12 @@ class And(Instruction):
     def __init__(self, instruction):
         super().__init__(instruction)
 
-    def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+    def execute(self) -> QWord:
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(0)
+        result_qword = self.created_nids[self.id]
+        assert(result_qword.size_in_bits == self.get_sort())
+        optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, self.circuit)
+        return result_qword
 
 
 class Not(Instruction):
@@ -313,13 +315,14 @@ class Eq(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands()
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
+
+        ancillas = self.ancillas[self.id]
+        self.circuit.x(ancillas[ancillas.size - 1])
         result_qword = self.created_nids[self.id]
-        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, self.ancillas[self.id])
+        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
         return result_qword
-
-
-
 
 
 class Neq(Instruction):
@@ -328,9 +331,12 @@ class Neq(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands()
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
         result_qword = self.created_nids[self.id]
-        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, self.ancillas[self.id])
+        ancillas = self.ancillas[self.id]
+        self.circuit.x(ancillas[ancillas.size - 1])
+        optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
         assert(result_qword.size_in_bits == 1)
         self.circuit.x(result_qword.actual[0])
         if result_qword.is_actual_constant[0] != -1:

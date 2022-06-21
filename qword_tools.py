@@ -73,3 +73,35 @@ def optimized_is_equal(bitset1: QuantumRegister, bitset2: QuantumRegister, resul
             circuit.x(result_qword.actual[0])
         return result_qword.actual
 
+
+def optimized_bitwise_and(bitset1: QuantumRegister, bitset2: QuantumRegister, result_qword: QWord, constants1: List[int],
+                       constants2: List[int], circuit: QuantumCircuit) -> QuantumRegister:
+
+    assert(bitset1.size == bitset2.size)
+    assert(bitset1.size == result_qword.size_in_bits)
+    for i in range(bitset1.size):
+        assert(result_qword.is_actual_constant[i] == 0)
+        if bitset1[i] != -1:
+            if bitset2[i] != -1:
+                if bitset1[i] == bitset2[i] and bitset1[i] == 1:
+                    result_qword.is_actual_constant[i] = 1
+                    circuit.x(result_qword.actual[i])
+            else:
+                if bitset1 == 0:
+                    pass
+                else:
+                    circuit.cx(bitset2[i], result_qword.actual[i])
+                    result_qword.is_actual_constant[i] = -1
+
+        elif bitset2[i] != -1:
+            if bitset2[i] == 0:
+                pass
+            else:
+                circuit.cx(bitset1[i], result_qword.actual[i])
+                result_qword.is_actual_constant[i] = -1
+        else:
+            # there are no constants
+            circuit.ccx(bitset1[i], bitset2[i], result_qword.actual[i])
+            result_qword.is_actual_constant[i] = -1
+    return result_qword.actual
+
