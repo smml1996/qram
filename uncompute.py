@@ -8,9 +8,10 @@ from qiskit.circuit.library import MCXGate
 CHECKPOINT_TYPE = 0
 GATE_TYPE = 1
 
-NOT = "X"
+X = "X"
 CX = "CX"
 MCX = "MCX"
+CCX = "CCX"
 
 
 class Element:
@@ -29,11 +30,15 @@ class Element:
         if type == CHECKPOINT_TYPE:
             return False
         else:
-            if self.gate_name == NOT:
+            if self.gate_name == X:
+                assert(len(self.operands) == 0)
                 circuit.x(self.target)
-            if self.gate_name == CX:
+            elif self.gate_name == CX:
                 assert(len(self.operands) == 1)
                 circuit.cx(self.operands[0], self.target)
+            elif self.gate_name == CCX:
+                assert(len(self.operands) == 2)
+                circuit.ccx(self.operands[0], self.operands[1], self.target)
             elif self.gate_name == MCX:
                 control_qubits = deepcopy(self.controls)
                 gate = MCXGate(len(self.controls))

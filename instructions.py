@@ -1,7 +1,6 @@
-from collections import Set
-
 from qword import *
 from qword_tools import *
+from uncompute import *
 
 
 class Instruction:
@@ -14,7 +13,11 @@ class Instruction:
     created_nids: Dict[int, QWord] = dict()
     created_nids_in_timestep: set = set()
     ancillas: Dict[int, QuantumRegister] = dict()
-    # model settings
+
+    # uncompute variables
+    global_stack: Stack = Stack()
+    current_stack: Stack = Stack()
+    current_queue: Queue = Queue()
 
     # END static attributes
 
@@ -143,6 +146,11 @@ class Instruction:
         Instruction.ancillas = dict()
         Instruction.created_nids_in_timestep = set()
 
+        # uncompute variables
+        Instruction.global_stack = Stack()
+        Instruction.current_stack = Stack()
+        Instruction.current_queue = Queue()
+
     @staticmethod
     def or_bad_states():
         raise Exception("missing implementation")
@@ -164,6 +172,7 @@ class Init(Instruction):
             assert(qword1.is_actual_constant[index] == 0)
             if value == 1:
                 self.circuit.x(qword1.actual[index])
+                self.current_stack.push(Element(GATE_TYPE, X, [], qword1.actual[index]))
                 qword1.is_actual_constant[index] = 1
         return qword1
 
@@ -235,6 +244,7 @@ class State(Instruction):
                     if value == 1:
                         assert(qword.is_previous_constant[index] == 0)
                         self.circuit.x(qword.previous[index])
+                        self.current_stack.push(Element(GATE_TYPE, X, [], qword.previous[index]))
                         qword.is_previous_constant[index] = 1
                 qword.force_current_state(qword.previous, qword.is_previous_constant)
         return Instruction.created_nids[self.id]
@@ -316,7 +326,8 @@ class And(Instruction):
         result_qword = self.created_nids[self.id]
         assert(result_qword.size_in_bits == self.get_sort())
         if self.id not in self.created_nids_in_timestep:
-            optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, self.circuit)
+            optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, self.circuit,
+                                  self.current_stack)
         return result_qword
 
 
@@ -336,7 +347,7 @@ class Not(Instruction):
             x, constants = self.get_last_qubitset(operand1.name, operand1_qword)
             optimized_bitwise_not(x, self.created_nids[self.id].actual, constants,
                                   self.created_nids[self.id].is_actual_constant,
-                                  self.circuit)
+                                  self.circuit, self.current_stack)
         return self.created_nids[self.id]
 
 
@@ -351,7 +362,7 @@ class Eq(Instruction):
         ancillas = self.ancillas[self.id]
         if self.id not in self.created_nids_in_timestep:
             self.circuit.x(ancillas[ancillas.size - 1])
-            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
+            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas, self.stack)
         return result_qword
 
 
@@ -368,9 +379,11 @@ class Neq(Instruction):
 
         if self.id not in self.created_nids_in_timestep:
             self.circuit.x(ancillas[ancillas.size - 1])
-            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas)
+            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas,
+                               self.current_stack)
             assert(result_qword.size_in_bits == 1)
             self.circuit.x(result_qword.actual[0])
+            self.current_stack.push(Element(GATE_TYPE, X, [], result_qword.actual[0]))
             if result_qword.is_actual_constant[0] != -1:
                 result_qword.is_actual_constant[0] += 1
                 result_qword.is_actual_constant[0] = int(result_qword.is_actual_constant[0] % 2)
@@ -437,10 +450,11 @@ class Udiv(Instruction):
                 for (index, res) in enumerate(result_in_binary):
                     assert (self.created_nids[self.id].is_actual_constant[index] == 0)
                     self.circuit.x(self.created_nids[self.id].actual[index])
+                    self.current_stack.push(Element(GATE_TYPE, X, [], self.created_nids[self.id].actual[index]))
                     self.created_nids[self.id].is_actual_constant[index] = 1
 
             else:
-                raise Exception("non constant operands on UREM not implemented")
+                raise Exception("non constant operands on UDIV not implemented")
         return self.created_nids[self.id]
 
 
@@ -472,6 +486,7 @@ class Urem(Instruction):
                 for (index, res) in enumerate(result_in_binary):
                     assert(self.created_nids[self.id].is_actual_constant[index] == 0)
                     self.circuit.x(self.created_nids[self.id].actual[index])
+                    self.current_stack.push(Element(GATE_TYPE, X, [], self.created_nids[self.id].actual[index]))
                     self.created_nids[self.id].is_actual_constant[index] = 1
             else:
                 raise Exception("non constant operands on UREM not implemented")
