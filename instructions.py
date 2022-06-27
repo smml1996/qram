@@ -447,7 +447,13 @@ class Ult(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + self.get_sort()-1)
+        result_qword = Instruction.created_nids[self.id]
+        assert (result_qword.size_in_bits == self.get_sort())
+        if self.id not in Instruction.created_nids_in_timestep:
+            optimized_unsigned_ult(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
+                                  Instruction.ancillas[self.id], Instruction.current_stack)
+        return result_qword
 
 
 class Ulte(Instruction):
@@ -455,7 +461,14 @@ class Ulte(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + self.get_sort()-1 + 2 + sort+1)
+        result_qword = Instruction.created_nids[self.id]
+        assert (result_qword.size_in_bits == self.get_sort())
+        if self.id not in Instruction.created_nids_in_timestep:
+            optimized_unsigned_ulte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
+                                   Instruction.current_stack)
+        return result_qword
 
 
 class Ugt(Instruction):
@@ -463,7 +476,13 @@ class Ugt(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + self.get_sort()-1)
+        result_qword = Instruction.created_nids[self.id]
+        assert (result_qword.size_in_bits == self.get_sort())
+        if self.id not in Instruction.created_nids_in_timestep:
+            optimized_unsigned_ugt(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
+                                   Instruction.current_stack)
+        return result_qword
 
 
 class Ugte(Instruction):
@@ -471,7 +490,14 @@ class Ugte(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + sort -1 + 2 + sort + 1)
+        result_qword = Instruction.created_nids[self.id]
+        assert (result_qword.size_in_bits == self.get_sort())
+        if self.id not in Instruction.created_nids_in_timestep:
+            optimized_unsigned_ugte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
+                                   Instruction.current_stack)
+        return result_qword
 
 
 class Udiv(Instruction):

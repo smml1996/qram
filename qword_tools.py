@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library import MCXGate
 from qword import QWord
 from uncompute import *
+from copy import deepcopy
 
 
 def optimized_bitwise_not(x: QuantumRegister, y: QuantumRegister,constants_x: List[int], constants_y: List[int],
@@ -172,10 +173,87 @@ def optimized_get_twos_complement(bitset: QuantumRegister, circuit: QuantumCircu
 def optimized_bitwise_add(bitset1: QuantumRegister, bitset2: QuantumRegister, result_qword: QWord, constants1: List[int],
                           constants2: List[int], circuit: QuantumCircuit, stack: Stack):
 
-
     assert(len(bitset1) == len(bitset2))
 
     add_one_bitset(bitset1, constants1, result_qword, circuit, stack)
     add_one_bitset(bitset2, constants2, result_qword, circuit, stack)
+
+def optimized_unsigned_ult(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: QWord,
+                           consts1: List[int], consts2: List[int], circuit: QuantumCircuit, ancillas, stack: Stack):
+    bitset1 = bits1[:]
+    bitset1.append(ancillas[0])
+    bitset2 = bits2[:]
+    bitset2.append(ancillas[1])
+
+    constants1 = deepcopy(consts1)
+    constants1.append(0)
+    constants2 = deepcopy(consts2)
+    constants2.append(0)
+
+    local_stack = optimized_get_twos_complement(bitset2, circuit)
+
+    bits_result_addition = ancillas[2:]
+    bits_result_addition.append(result_qword.actual[0])
+    assert(len(result_qword.actual) == 1)
+    addition_result = QuantumRegister(bits=bits_result_addition)
+    addition_qword = QWord("ult_add", len(bits_result_addition))
+    addition_qword.force_current_state(addition_result, [0 for _ in bits_result_addition])
+
+
+    optimized_bitwise_add(bitset1, bitset2, addition_qword, constants1, constants2, circuit, stack)
+
+    while not local_stack.is_empty():
+        local_stack.pop().apply()
+
+
+def optimized_unsigned_ugt(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: QWord,
+                           consts1: List[int], consts2: List[int], circuit: QuantumCircuit, ancillas, stack: Stack):
+    optimized_unsigned_ult(bits2, bits1, result_qword,consts2, consts1, circuit, ancillas, stack)
+
+def logic_or(controls, result_bit, circuit, stack):
+    assert(len(controls)>0)
+    for bit in controls:
+        circuit.x(bit)
+        stack.push(Element(GATE_TYPE, X, [], bit))
+
+    gate = MCXGate(len(controls))
+    stack.push(Element(GATE_TYPE, MCX, controls, result_bit))
+    controls.append(result_bit)
+    circuit.append(gate, controls)
+
+    for bit in controls:
+        circuit.x(bit)
+        stack.push(Element(GATE_TYPE, X, [], bit))
+
+def optimized_unsigned_ulte(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: QWord,
+                           consts1: List[int], consts2: List[int], circuit: QuantumCircuit, ancillas, stack: Stack):
+
+    assert(len(bits1) == len(bits2))
+    assert(len(consts1) == len(bits2))
+    assert(len(result_qword.actual) == 1)
+    ancillas_lte = ancillas[:2 + len(bits1)]
+    ancillas_eq = ancillas[2 + len(bits1):-2]
+
+    lte_result_qubit = ancillas[len(ancillas)-1]
+    eq_result_qubit = ancillas[len(ancillas)-2]
+    register_lte = QuantumRegister(bits=lte_result_qubit)
+    register_eq = QuantumRegister(bits=eq_result_qubit)
+    qword_lte = QWord(1)
+    qword_lte.force_current_state(register_lte, [0])
+    qword_eq = QWord(1)
+    qword_eq.force_current_state(register_eq, [0])
+
+    optimized_unsigned_ult(bits1, bits2, qword_lte, consts1, consts2, circuit, ancillas_lte, stack)
+
+    optimized_is_equal(bits1, bits2, qword_eq, consts1,consts2, circuit, ancillas_eq, stack)
+
+    logic_or([qword_lte.actual[0], qword_eq.actual[0]], result_qword.actual[0])
+
+
+
+def optimized_unsigned_ugte(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: QWord,
+                           consts1: List[int], consts2: List[int], circuit: QuantumCircuit, ancillas, stack: Stack):
+    optimized_unsigned_ulte(bits2, bits1, result_qword, consts2, consts1, circuit, ancillas, stack)
+
 
 
