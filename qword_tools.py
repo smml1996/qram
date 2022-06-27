@@ -17,6 +17,7 @@ def optimized_bitwise_not(x: QuantumRegister, y: QuantumRegister,constants_x: Li
             circuit.x(y[index])
         else:
             circuit.cx(x[index], y[index])
+            circuit.x(y[index])
     return y
 
 def optimized_is_equal(bitset1: QuantumRegister, bitset2: QuantumRegister, result_qword: QWord, constants1: List[int],
@@ -51,7 +52,7 @@ def optimized_is_equal(bitset1: QuantumRegister, bitset2: QuantumRegister, resul
                         pass
             elif constants2[i] != -1:
                 control_qubits.append(ancillas[i])
-                circuit.cx(bitset1[i],ancillas[i])
+                circuit.cx(bitset1[i], ancillas[i])
                 if constants2[i] == 0:
                     circuit.x(ancillas[i])
                 else:
