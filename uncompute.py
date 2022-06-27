@@ -1,6 +1,7 @@
 from typing import List, Any
 from qiskit import QuantumCircuit
 from copy import deepcopy
+from collections import deque
 
 from qiskit.circuit.library import MCXGate
 
@@ -12,7 +13,7 @@ CX = "CX"
 MCX = "MCX"
 
 
-class StackElement:
+class Element:
     element_type: int
     gate_name: str
     controls: List[Any]
@@ -24,7 +25,7 @@ class StackElement:
         self.operands = controls
         self.target = target
 
-    def apply_element(self, circuit: QuantumCircuit):
+    def apply(self, circuit: QuantumCircuit):
         if type == CHECKPOINT_TYPE:
             return False
         else:
@@ -40,3 +41,47 @@ class StackElement:
                 circuit.append(gate, control_qubits)
             else:
                 raise Exception(f"Invalid stack element with gate {self.gate_name}")
+
+
+class Queue:
+    data_structure: deque
+    size: int
+    def __init__(self):
+        self.data_structure = deque()
+        self.size = 0
+
+    def push(self, element: Element):
+        self.push(element)
+        self.size += 1
+
+    def is_empty(self):
+        return self.size == 0
+
+    def pop(self):
+        if self.size == 0:
+            return None
+        self.size -=1
+        return self.data_structure.popleft()
+
+
+class Stack:
+    data_structure: deque
+    size: int
+
+    def __init__(self):
+        self.data_structure = deque()
+        self.size = 0
+
+    def push(self, element: Element):
+        self.push(element)
+        self.size += 1
+
+    def is_empty(self):
+        return self.size == 0
+
+    def pop(self):
+        if self.size == 0:
+            return None
+        self.size -= 1
+        return self.data_structure.pop()
+
