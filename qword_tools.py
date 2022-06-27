@@ -127,3 +127,55 @@ def optimized_bitwise_and(bitset1: QuantumRegister, bitset2: QuantumRegister, re
             result_qword.is_actual_constant[i] = -1
     return result_qword.actual
 
+
+def add_one_bitset(bitset, constants, result_qword, circuit, stack):
+    carry = 0
+    sort = len(constants)
+    for (index, qubit) in enumerate(bitset):
+        if carry is None or constants[index] == -1 or result_qword.is_actual_constant[index] == -1:
+            result_qword.is_actual_constant[index] = -1
+            carry = None
+        else:
+            result_qword = (constants[index] + result_qword.is_actual_constant[index] + carry) % 2
+            carry = (constants[index] + result_qword.is_actual_constant[index] + carry) > 2
+        for i in range(index, len(result_qword.actual)):
+            # add control qubits
+            qubits = result_qword.actual[index:(sort-1-i)]
+            qubits.append(qubit)
+
+            gate = MCXGate(len(qubits))
+            stack.push(Element(GATE_TYPE, MCX, qubits, result_qword.actual[sort-1-i]))
+
+            # add target qubit
+            qubits.append(result_qword.actual[sort-1-i])
+            circuit.append(gate, qubits)
+
+def optimized_get_twos_complement(bitset: QuantumRegister, circuit: QuantumCircuit) -> Stack:
+    stack = Stack()
+
+    for bit in bitset:
+        circuit.x(bit)
+        stack.push(Element(GATE_TYPE, X, [], bit))
+
+    for i in range(len(bitset)-1):
+        qubits = bitset[:len(bitset)-i-1]
+        gate = MCXGate(len(qubits))
+        stack.push(Element(GATE_TYPE, MCX, qubits, bitset[len(bitset)-i-1]))
+        qubits.append(bitset[len(bitset)-i-1])
+        circuit.append(gate, qubits)
+    circuit.x(bitset[0])
+    stack.push(Element(GATE_TYPE, X, [], bitset[0]))
+    return stack
+
+
+
+def optimized_bitwise_add(bitset1: QuantumRegister, bitset2: QuantumRegister, result_qword: QWord, constants1: List[int],
+                          constants2: List[int], circuit: QuantumCircuit, stack: Stack):
+
+
+    assert(len(bitset1) == len(bitset2))
+
+    add_one_bitset(bitset1, constants1, result_qword, circuit, stack)
+    add_one_bitset(bitset2, constants2, result_qword, circuit, stack)
+
+

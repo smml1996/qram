@@ -114,12 +114,12 @@ class Instruction:
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
 
-        if self.id not in self.created_nids.keys():
-            self.created_nids[self.id] = QWord(self.register_name, 1)
+        if self.id not in Instruction.created_nids.keys():
+            Instruction.created_nids[self.id] = QWord(self.register_name, 1)
             if ancilla_size > 0:
                 ancillas = QuantumRegister(ancilla_size)
-                self.ancillas[self.id] = ancillas
-                self.circuit.add_register(ancillas)
+                Instruction.ancillas[self.id] = ancillas
+                Instruction.circuit.add_register(ancillas)
 
         return bitset1, constants1, bitset2, constants2
 
@@ -171,8 +171,8 @@ class Init(Instruction):
             assert(value != -1)
             assert(qword1.is_actual_constant[index] == 0)
             if value == 1:
-                self.circuit.x(qword1.actual[index])
-                self.current_stack.push(Element(GATE_TYPE, X, [], qword1.actual[index]))
+                Instruction.circuit.x(qword1.actual[index])
+                Instruction.current_stack.push(Element(GATE_TYPE, X, [], qword1.actual[index]))
                 qword1.is_actual_constant[index] = 1
         return qword1
 
@@ -185,12 +185,12 @@ class Input(Instruction):
     def execute(self) -> QWord:
         sort = self.get_sort()
         qword = QWord(self.register_name, sort)
-        qword.create_state(self.circuit, set_previous=True)
-        self.circuit.h(qword.previous)
+        qword.create_state(Instruction.circuit, set_previous=True)
+        Instruction.circuit.h(qword.previous)
         for i in range(sort):
             qword.is_previous_constant[i] = -1
-        self.inputs.append(qword)
-        self.created_nids[self.id] = qword
+        Instruction.inputs.append(qword)
+        Instruction.created_nids[self.id] = qword
         return qword
 
 
@@ -216,10 +216,10 @@ class State(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        if self.id in self.created_nids.keys():
+        if self.id in Instruction.created_nids.keys():
             sort = self.get_sort()
             qword = QWord(self.register_name, sort)
-            qword.create_state(self.circuit, set_previous=True)
+            qword.create_state(Instruction.circuit, set_previous=True)
 
             # returns a vector full of zeros, we use this to initialize memory with zeros
             bit_representation = get_bit_repr_of_number(0, qword.size_in_bits)
@@ -243,8 +243,8 @@ class State(Instruction):
                     assert(value == 1 or value == 0)
                     if value == 1:
                         assert(qword.is_previous_constant[index] == 0)
-                        self.circuit.x(qword.previous[index])
-                        self.current_stack.push(Element(GATE_TYPE, X, [], qword.previous[index]))
+                        Instruction.circuit.x(qword.previous[index])
+                        Instruction.current_stack.push(Element(GATE_TYPE, X, [], qword.previous[index]))
                         qword.is_previous_constant[index] = 1
                 qword.force_current_state(qword.previous, qword.is_previous_constant)
         return Instruction.created_nids[self.id]
@@ -263,8 +263,59 @@ class Add(Instruction):
     def __init__(self, instruction):
         super(Add, self).__init__(instruction)
 
-    def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+    def execute(self) -> QWord:
+        sort = self.get_sort()
+        if self.id not in Instruction.created_nids.keys():
+            Instruction.created_nids[self.id] = QWord(self.register_name, sort)
+            Instruction.created_nids[self.id].create_state(Instruction.circuit)
+            if self.instruction[1] == INC or self.instruction[1] == DEC:
+                if self.instruction == INC:
+                    bit_ = get_bit_repr_of_number(1, sort)
+                else:
+                    # is decrementing by 1
+                    bit_ = get_bit_repr_of_number(-1, sort)
+
+                Instruction.ancillas[self.id] = QuantumRegister(sort, name=self.register_name)
+                Instruction.circuit.add_register(Instruction.ancillas[self.id])
+                for (index, b) in enumerate(bit_):
+                    if b == 1:
+                        Instruction.circuit.x(Instruction.ancillas[self.id][index])
+                    else:
+                        assert(b == 0)
+
+        if self.id not in Instruction.created_nids_in_timestep:
+            local_stack = None
+            operand1 = Instruction(self.get_instruction_at_index(3))
+            qword1 = operand1.execute()
+            qubit_set1, constants1 = self.get_last_qubitset(operand1.name, qword1)
+            if self.instruction[1] == ADD:
+                operand2 = Instruction(self.get_instruction_at_index(4))
+                qword2 = operand2.execute()
+                qubit_set2, constants2 = self.get_last_qubitset(operand2.name, qword2)
+            elif self.instruction[1] == SUB:
+                operand2 = Instruction(self.get_instruction_at_index(4))
+                qword2 = operand2.execute()
+                qubit_set2, constants2 = self.get_last_qubitset(operand2.name, qword2)
+                local_stack = optimized_get_twos_complement(qubit_set2, Instruction.circuit)
+            else:
+                qubit_set2 = Instruction.ancillas[self.id]
+                if self.instruction == INC:
+                    constants2 = get_bit_repr_of_number(1, sort)
+                else:
+                    # is decrementing by 1
+                    constants2 = get_bit_repr_of_number(-1, sort)
+
+
+            assert len(qubit_set1) == len(qubit_set2)
+            assert len(qubit_set1) == sort
+            optimized_bitwise_add(qubit_set1, qubit_set2, Instruction.created_nids[self.id], constants1, constants2,
+                                  Instruction.circuit, Instruction.current_stack)
+            Instruction.created_nids_in_timestep.add(self.id)
+            if local_stack is not None:
+                # uncomputes twos complement
+                while not local_stack.is_empty():
+                    local_stack.pop().apply(Instruction.circuit)
+        return Instruction.created_nids[self.id]
 
 
 class Mul(Instruction):
@@ -298,9 +349,9 @@ class Uext(Instruction):
         ext_value = int(self.instruction[4])
 
         assert sort == ext_value + previous_qword.size_in_bits
-        if self.id not in self.created_nids.keys():
+        if self.id not in Instruction.created_nids.keys():
             dummy_register = QuantumRegister(ext_value)
-            self.ancillas[self.id] = dummy_register
+            Instruction.ancillas[self.id] = dummy_register
 
         result_qubits = []
 
@@ -308,7 +359,7 @@ class Uext(Instruction):
             result_qubits.append(qubit)
             constants[i] = constants_op[i]
 
-        for qubit in self.ancillas[self.id]:
+        for qubit in Instruction.ancillas[self.id]:
             result_qubits.append(qubit)
 
         result = QWord(self.register_name, sort)
@@ -323,11 +374,11 @@ class And(Instruction):
 
     def execute(self) -> QWord:
         bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(0)
-        result_qword = self.created_nids[self.id]
+        result_qword = Instruction.created_nids[self.id]
         assert(result_qword.size_in_bits == self.get_sort())
-        if self.id not in self.created_nids_in_timestep:
-            optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, self.circuit,
-                                  self.current_stack)
+        if self.id not in Instruction.created_nids_in_timestep:
+            optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
+                                  Instruction.current_stack)
         return result_qword
 
 
@@ -337,18 +388,18 @@ class Not(Instruction):
 
     def execute(self) -> QWord:
         sort = self.get_sort()
-        if self.id not in self.created_nids.keys():
-            self.created_nids[self.id] = QWord(self.register_name, sort)
-            self.created_nids[self.id].create_state(self.circuit)
+        if self.id not in Instruction.created_nids.keys():
+            Instruction.created_nids[self.id] = QWord(self.register_name, sort)
+            Instruction.created_nids[self.id].create_state(Instruction.circuit)
 
-        if self.id not in self.created_nids_in_timestep:
+        if self.id not in Instruction.created_nids_in_timestep:
             operand1 = Instruction(self.get_instruction_at_index(3))
             operand1_qword = operand1.execute()
             x, constants = self.get_last_qubitset(operand1.name, operand1_qword)
-            optimized_bitwise_not(x, self.created_nids[self.id].actual, constants,
-                                  self.created_nids[self.id].is_actual_constant,
-                                  self.circuit, self.current_stack)
-        return self.created_nids[self.id]
+            optimized_bitwise_not(x, Instruction.created_nids[self.id].actual, constants,
+                                  Instruction.created_nids[self.id].is_actual_constant,
+                                  Instruction.circuit, Instruction.current_stack)
+        return Instruction.created_nids[self.id]
 
 
 class Eq(Instruction):
@@ -358,11 +409,12 @@ class Eq(Instruction):
     def execute(self) -> QWord:
         sort = self.get_sort()
         bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
-        result_qword = self.created_nids[self.id]
-        ancillas = self.ancillas[self.id]
-        if self.id not in self.created_nids_in_timestep:
-            self.circuit.x(ancillas[ancillas.size - 1])
-            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas, self.stack)
+        result_qword = Instruction.created_nids[self.id]
+        ancillas = Instruction.ancillas[self.id]
+        if self.id not in Instruction.created_nids_in_timestep:
+            Instruction.circuit.x(ancillas[ancillas.size - 1])
+            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
+                               Instruction.current_stack)
         return result_qword
 
 
@@ -374,16 +426,16 @@ class Neq(Instruction):
     def execute(self) -> QWord:
         sort = self.get_sort()
         bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
-        result_qword = self.created_nids[self.id]
-        ancillas = self.ancillas[self.id]
+        result_qword = Instruction.created_nids[self.id]
+        ancillas = Instruction.ancillas[self.id]
 
-        if self.id not in self.created_nids_in_timestep:
-            self.circuit.x(ancillas[ancillas.size - 1])
-            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, self.circuit, ancillas,
-                               self.current_stack)
+        if self.id not in Instruction.created_nids_in_timestep:
+            Instruction.circuit.x(ancillas[ancillas.size - 1])
+            optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
+                               Instruction.current_stack)
             assert(result_qword.size_in_bits == 1)
-            self.circuit.x(result_qword.actual[0])
-            self.current_stack.push(Element(GATE_TYPE, X, [], result_qword.actual[0]))
+            Instruction.circuit.x(result_qword.actual[0])
+            Instruction.current_stack.push(Element(GATE_TYPE, X, [], result_qword.actual[0]))
             if result_qword.is_actual_constant[0] != -1:
                 result_qword.is_actual_constant[0] += 1
                 result_qword.is_actual_constant[0] = int(result_qword.is_actual_constant[0] % 2)
@@ -427,7 +479,7 @@ class Udiv(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        if self.id not in self.created_nids_in_timestep:
+        if self.id not in Instruction.created_nids_in_timestep:
             operand1 = Instruction(self.get_instruction_at_index(3))
             operand1_qword = operand1.execute()
 
@@ -443,19 +495,19 @@ class Udiv(Instruction):
                 result_in_decimal = bitset1_in_decimal // bitset2_in_decimal
 
                 result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
-                if self.id not in self.created_nids.keys():
-                    self.created_nids[self.id] = QWord(self.register_name, self.get_sort())
-                    self.created_nids[self.id].create_state(self.circuit)
+                if self.id not in Instruction.created_nids.keys():
+                    Instruction.created_nids[self.id] = QWord(self.register_name, self.get_sort())
+                    Instruction.created_nids[self.id].create_state(Instruction.circuit)
 
                 for (index, res) in enumerate(result_in_binary):
-                    assert (self.created_nids[self.id].is_actual_constant[index] == 0)
-                    self.circuit.x(self.created_nids[self.id].actual[index])
-                    self.current_stack.push(Element(GATE_TYPE, X, [], self.created_nids[self.id].actual[index]))
-                    self.created_nids[self.id].is_actual_constant[index] = 1
+                    assert (Instruction.created_nids[self.id].is_actual_constant[index] == 0)
+                    Instruction.circuit.x(Instruction.created_nids[self.id].actual[index])
+                    Instruction.current_stack.push(Element(GATE_TYPE, X, [], Instruction.created_nids[self.id].actual[index]))
+                    Instruction.created_nids[self.id].is_actual_constant[index] = 1
 
             else:
                 raise Exception("non constant operands on UDIV not implemented")
-        return self.created_nids[self.id]
+        return Instruction.created_nids[self.id]
 
 
 class Urem(Instruction):
@@ -463,7 +515,7 @@ class Urem(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        if self.id not in self.created_nids_in_timestep:
+        if self.id not in Instruction.created_nids_in_timestep:
             operand1 = Instruction(self.get_instruction_at_index(3))
             operand1_qword = operand1.execute()
 
@@ -479,18 +531,18 @@ class Urem(Instruction):
                 result_in_decimal = bitset1_in_decimal % bitset2_in_decimal
 
                 result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
-                if self.id not in self.created_nids.keys():
-                    self.created_nids[self.id] = QWord(self.register_name, self.get_sort())
-                    self.created_nids[self.id].create_state(self.circuit)
+                if self.id not in Instruction.created_nids.keys():
+                    Instruction.created_nids[self.id] = QWord(self.register_name, self.get_sort())
+                    Instruction.created_nids[self.id].create_state(Instruction.circuit)
 
                 for (index, res) in enumerate(result_in_binary):
-                    assert(self.created_nids[self.id].is_actual_constant[index] == 0)
-                    self.circuit.x(self.created_nids[self.id].actual[index])
-                    self.current_stack.push(Element(GATE_TYPE, X, [], self.created_nids[self.id].actual[index]))
-                    self.created_nids[self.id].is_actual_constant[index] = 1
+                    assert(Instruction.created_nids[self.id].is_actual_constant[index] == 0)
+                    Instruction.circuit.x(Instruction.created_nids[self.id].actual[index])
+                    Instruction.current_stack.push(Element(GATE_TYPE, X, [], Instruction.created_nids[self.id].actual[index]))
+                    Instruction.created_nids[self.id].is_actual_constant[index] = 1
             else:
                 raise Exception("non constant operands on UREM not implemented")
-        return self.created_nids[self.id]
+        return Instruction.created_nids[self.id]
 
 
 class Bad(Instruction):
