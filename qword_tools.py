@@ -289,4 +289,6 @@ def optimized_mul(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: 
         add_one_bitset(ancillas, consts_ancillas, result_qword, circuit, local_stack)
         # make ancillas |0> again
         while not local_stack.is_empty():
-            local_stack.pop().apply(circuit)
+            element = local_stack.pop()
+            element.apply(circuit)
+            stack.push(element)

@@ -1,6 +1,5 @@
 import sys
 from utils import *
-from qasm_gen import *
 from instructions import Instruction
 from settings import *
 
@@ -13,7 +12,7 @@ Instruction.all_instructions = read_file(input_file, modify_memory_sort=True, se
 
 for i in range(n):
 
-    # clear nids set of nids created in the previous timestep
+    # clear nids set of nids created in the previous time-step
     Instruction.created_nids_in_timestep.clear()
 
     for instruction in Instruction.all_instructions.values():
