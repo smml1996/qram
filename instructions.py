@@ -348,7 +348,8 @@ class Mul(Instruction):
         assert(result_qword.size_in_bits == sort)
 
         if self.id not in self.created_nids_in_timestep:
-            pass
+            optimized_mul(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
+                          Instruction.ancillas[self.id], Instruction.current_stack)
         return result_qword
 
 class Ite(Instruction):
