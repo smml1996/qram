@@ -1,5 +1,4 @@
-from typing import List, Optional, Dict
-from settings import *
+from typing import Optional
 from utils import *
 from qiskit import QuantumRegister, QuantumCircuit
 
@@ -13,15 +12,17 @@ class QWord:
     name: str
     actual: Optional
     previous: Optional
+    uncomputation_space: Optional
     is_actual_constant: List[int]
     is_previous_constant: List[int]
 
     def __init__(self, name, size_in_bits: int = 64):
 
-
+        self.actual = None
+        self.previous = None
+        self.uncomputation_space = None
         self.size_in_bits = size_in_bits
         self.name = name
-
 
     def __repr__(self):
         return self.name
@@ -38,6 +39,11 @@ class QWord:
             self.is_actual_constant = [0 for _ in range(self.size_in_bits)]
             circuit.add_register(self.actual)
             return self.actual
+
+    def create_uncomputation_qubits(self, circuit: QuantumCircuit) -> QuantumRegister:
+        self.uncomputation_space = QuantumRegister(self.size_in_bits, name="unc-"+self.name)
+        circuit.add_register(self.uncomputation_space)
+        return self.uncomputation_space
 
     def is_actual_bit_constant(self, bit_index) -> bool:
         return self.is_actual_constant[bit_index] != -1

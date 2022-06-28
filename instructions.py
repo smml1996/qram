@@ -1,6 +1,7 @@
 from qword import *
 from qword_tools import *
 from uncompute import *
+from settings import *
 
 
 class Instruction:
@@ -104,7 +105,7 @@ class Instruction:
 
         return qword.actual, qword.is_actual_constant
 
-    def get_data_2_operands(self, ancilla_size):
+    def get_data_2_operands(self, register_size, ancilla_size):
         operand1 = Instruction(self.get_instruction_at_index(3))
         operand1_qword = operand1.execute()
 
@@ -115,7 +116,7 @@ class Instruction:
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
 
         if self.id not in Instruction.created_nids.keys():
-            Instruction.created_nids[self.id] = QWord(self.register_name, 1)
+            Instruction.created_nids[self.id] = QWord(self.register_name, register_size)
             if ancilla_size > 0:
                 ancillas = QuantumRegister(ancilla_size)
                 Instruction.ancillas[self.id] = ancillas
@@ -247,6 +248,8 @@ class State(Instruction):
                         Instruction.current_stack.push(Element(GATE_TYPE, X, [], qword.previous[index]))
                         qword.is_previous_constant[index] = 1
                 qword.force_current_state(qword.previous, qword.is_previous_constant)
+            else:
+                qword.create_uncomputation_qubits(Instruction.circuit)
         return Instruction.created_nids[self.id]
 
 
@@ -255,7 +258,23 @@ class Next(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+        previous_state_qword = Instruction(self.get_instruction_at_index(3)).execute()
+        future_state = Instruction(self.get_instruction_at_index(4))
+        future_state_qword = future_state.execute()
+        if previous_state_qword and future_state_qword:
+            assert(previous_state_qword.actual is not None)
+            assert (previous_state_qword.uncomputation_space is not None)
+
+            for q in previous_state_qword.is_actual_constant:
+                assert (q == 0)
+            future_bits, _ = self.get_last_qubitset(future_state.name, future_state_qword)
+            for (index, bit) in enumerate(future_bits):
+                Instruction.circuit.cx(bit, previous_state_qword.actual)
+                # TODO: add to STACK
+        else:
+            # if for some reason one, evaluating one of the operands returns None we throw an error
+            raise Exception(f"not valid transition: {self}")
+        return None
 
 
 # Arithmetic operations
@@ -331,8 +350,78 @@ class Ite(Instruction):
     def __init__(self, instruction):
         super().__init__(instruction)
 
-    def execute(self) -> Optional[QWord]:
-        raise Exception("missing implementation")
+    def execute(self) -> QWord:
+        sort = self.get_sort()
+        if self.id not in Instruction.created_nids.keys():
+            Instruction.created_nids[self.id] = QWord(self.register_name, sort)
+        if self.id not in Instruction.created_nids_in_timestep:
+            condition = Instruction(self.get_instruction_at_index(3))
+
+            qword_condition = condition.execute()
+            assert qword_condition.size_in_bits == 1
+
+            if self.instruction[3][0] == '-':
+                true_part = Instruction(self.get_instruction_at_index(5))
+                false_part = Instruction(self.get_instruction_at_index(4))
+            else:
+                true_part = Instruction(self.get_instruction_at_index(4))
+                false_part = Instruction(self.get_instruction_at_index(5))
+
+            qubit_condition, is_condition_constant = self.get_last_qubitset(condition.name, qword_condition)
+
+            assert(len(is_condition_constant) == 1)
+            assert(len(qubit_condition) == 1)
+
+            result_qword = Instruction.created_nids[self.id]
+            if is_condition_constant[0] != -1:
+                if is_condition_constant == 1:
+                    true_part_qword = true_part.execute()
+                    bitset, constants = self.get_last_qubitset(true_part.name, true_part_qword)
+                else:
+                    false_part_qword = false_part.execute()
+                    bitset, constants = self.get_last_qubitset(false_part.name, false_part_qword)
+                for (index, value) in enumerate(constants):
+                    Instruction.circuit.cx(bitset[index], result_qword.actual[index])
+                    result_qword.is_actual_constant[index] = value
+                    Instruction.current_stack.push(Element(GATE_TYPE, CX, [bitset[index]], result_qword.actual[index]))
+            else:
+                true_part_qword = true_part.execute()
+                true_part_bits, constants_true_part = self.get_last_qubitset(true_part.name, true_part_qword)
+
+                false_part_qword = false_part.execute()
+                false_part_bits, constants_false_part = self.get_last_qubitset(false_part.name, false_part_qword)
+
+                for (index, result_bit) in enumerate(result_qword.actual):
+                    Instruction.circuit.ccx(qubit_condition[0], true_part_bits[index], result_bit)
+                    Instruction.current_stack.push(Element(GATE_TYPE, CCX, [qubit_condition[0], true_part_bits[index]],
+                                                           result_bit))
+
+                Instruction.circuit.x(qubit_condition[0])
+                Instruction.current_stack.push(Element(GATE_TYPE, X, [], qubit_condition[0]))
+                for (index, result_bit) in enumerate(result_qword.actual):
+                    Instruction.circuit.ccx(qubit_condition[0], false_part_bits[index], result_bit)
+                    Instruction.current_stack.push(Element(GATE_TYPE, CCX, [qubit_condition[0], false_part_bits[index]],
+                                                           result_bit))
+                Instruction.circuit.x(qubit_condition[0])
+                Instruction.current_stack.push(Element(GATE_TYPE, X, [], qubit_condition[0]))
+
+                # constant propagation
+                for (index,(const_true_part, const_false_part)) in enumerate(zip(constants_true_part,
+                                                                                 constants_false_part)):
+                    if const_true_part == const_false_part:
+                        if const_true_part == -1:
+                            result_qword.is_actual_constant[index] = -1
+                        else:
+                            result_qword.is_actual_constant[index] = const_true_part
+                    else:
+                        result_qword.is_actual_constant[index] =  -1
+
+
+        return Instruction.created_nids[self.id]
+
+
+
+
 
 
 class Uext(Instruction):
@@ -373,9 +462,10 @@ class And(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(0)
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, 0)
         result_qword = Instruction.created_nids[self.id]
-        assert(result_qword.size_in_bits == self.get_sort())
+        assert(result_qword.size_in_bits == sort)
         if self.id not in Instruction.created_nids_in_timestep:
             optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
                                   Instruction.current_stack)
@@ -408,7 +498,7 @@ class Eq(Instruction):
 
     def execute(self) -> QWord:
         sort = self.get_sort()
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, sort+1)
         result_qword = Instruction.created_nids[self.id]
         ancillas = Instruction.ancillas[self.id]
         if self.id not in Instruction.created_nids_in_timestep:
@@ -425,7 +515,7 @@ class Neq(Instruction):
 
     def execute(self) -> QWord:
         sort = self.get_sort()
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort+1)
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, sort+1)
         result_qword = Instruction.created_nids[self.id]
         ancillas = Instruction.ancillas[self.id]
 
@@ -447,7 +537,8 @@ class Ult(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + self.get_sort()-1)
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, 2 + sort-1)
         result_qword = Instruction.created_nids[self.id]
         assert (result_qword.size_in_bits == self.get_sort())
         if self.id not in Instruction.created_nids_in_timestep:
@@ -462,7 +553,7 @@ class Ulte(Instruction):
 
     def execute(self) -> Optional[QWord]:
         sort = self.get_sort()
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + self.get_sort()-1 + 2 + sort+1)
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, 2 + sort-1 + 2 + sort+1)
         result_qword = Instruction.created_nids[self.id]
         assert (result_qword.size_in_bits == self.get_sort())
         if self.id not in Instruction.created_nids_in_timestep:
@@ -476,7 +567,8 @@ class Ugt(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + self.get_sort()-1)
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, 2 + sort-1)
         result_qword = Instruction.created_nids[self.id]
         assert (result_qword.size_in_bits == self.get_sort())
         if self.id not in Instruction.created_nids_in_timestep:
@@ -491,7 +583,7 @@ class Ugte(Instruction):
 
     def execute(self) -> Optional[QWord]:
         sort = self.get_sort()
-        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(2 + sort -1 + 2 + sort + 1)
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, 2 + sort -1 + 2 + sort + 1)
         result_qword = Instruction.created_nids[self.id]
         assert (result_qword.size_in_bits == self.get_sort())
         if self.id not in Instruction.created_nids_in_timestep:
