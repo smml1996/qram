@@ -151,21 +151,23 @@ def add_one_bitset(bitset, constants, result_qword, circuit, stack):
             qubits.append(result_qword.actual[sort-1-i])
             circuit.append(gate, qubits)
 
-def optimized_get_twos_complement(bitset: QuantumRegister, circuit: QuantumCircuit) -> Stack:
+def optimized_get_twos_complement(bitset: QuantumRegister, circuit: QuantumCircuit, global_stack) -> Stack:
     stack = Stack()
 
     for bit in bitset:
         circuit.x(bit)
-        stack.push(Element(GATE_TYPE, X, [], bit))
+        global_stack.push(Element(GATE_TYPE, X, [], bit))
 
     for i in range(len(bitset)-1):
         qubits = bitset[:len(bitset)-i-1]
         gate = MCXGate(len(qubits))
         stack.push(Element(GATE_TYPE, MCX, qubits, bitset[len(bitset)-i-1]))
+        global_stack.push(Element(GATE_TYPE, MCX, qubits, bitset[len(bitset) - i - 1]))
         qubits.append(bitset[len(bitset)-i-1])
         circuit.append(gate, qubits)
     circuit.x(bitset[0])
     stack.push(Element(GATE_TYPE, X, [], bitset[0]))
+    global_stack.push(Element(GATE_TYPE, X, [], bitset[0]))
     return stack
 
 
@@ -190,7 +192,7 @@ def optimized_unsigned_ult(bits1: QuantumRegister, bits2: QuantumRegister, resul
     constants2 = deepcopy(consts2)
     constants2.append(0)
 
-    local_stack = optimized_get_twos_complement(bitset2, circuit)
+    local_stack = optimized_get_twos_complement(bitset2, circuit, stack)
 
     bits_result_addition = ancillas[2:]
     bits_result_addition.append(result_qword.actual[0])
@@ -203,7 +205,9 @@ def optimized_unsigned_ult(bits1: QuantumRegister, bits2: QuantumRegister, resul
     optimized_bitwise_add(bitset1, bitset2, addition_qword, constants1, constants2, circuit, stack)
 
     while not local_stack.is_empty():
-        local_stack.pop().apply()
+        element = local_stack.pop()
+        element.apply()
+        stack.push(element)
 
 
 def optimized_unsigned_ugt(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: QWord,
