@@ -342,8 +342,14 @@ class Mul(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> QWord:
-        raise Exception("missing implementation")
+        sort = self.get_sort()
+        bitset1, constants1, bitset2, constants2 = self.get_data_2_operands(sort, sort)
+        result_qword = Instruction.created_nids[self.id]
+        assert(result_qword.size_in_bits == sort)
 
+        if self.id not in self.created_nids_in_timestep:
+            pass
+        return result_qword
 
 class Ite(Instruction):
     # TODO: Correct Optimization
@@ -418,10 +424,6 @@ class Ite(Instruction):
 
 
         return Instruction.created_nids[self.id]
-
-
-
-
 
 
 class Uext(Instruction):

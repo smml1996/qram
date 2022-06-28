@@ -256,4 +256,37 @@ def optimized_unsigned_ugte(bits1: QuantumRegister, bits2: QuantumRegister, resu
     optimized_unsigned_ulte(bits2, bits1, result_qword, consts2, consts1, circuit, ancillas, stack)
 
 
+def multiply_word_by_bit(bits, bit, const_bits, consts_bit, result_word, circuit, shift, stack) -> (Stack, List[int]):
+    local_stack = Stack()
+    consts_ancillas = []
+    i = 0
+    while len(consts_ancillas) <= len(bits):
+        if i < shift:
+            consts_ancillas.append(0)
+        else:
+            circuit.ccx(bits[i], bit, result_word[i])
+            local_stack.push(Element(GATE_TYPE, CCX,  [bits[i], bit], result_word[i]))
+            stack.push(Element(GATE_TYPE, CCX, [bits[i], bit], result_word[i]))
+        if consts_bit != -1:
+            if consts_bit == 0:
+                consts_ancillas.append(0)
+            else:
+                consts_ancillas.append(const_bits[i])
+        else:
+            if const_bits[i] == 0:
+                consts_ancillas.append(0)
+            else:
+                consts_ancillas.append(-1)
+    return local_stack, consts_ancillas
 
+def optimized_mul(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: QWord,
+                           consts1: List[int], consts2: List[int], circuit: QuantumCircuit, ancillas, stack: Stack):
+
+    assert(len(ancillas) == len(result_qword.actual))
+    for (index,bit) in enumerate(bits1):
+        local_stack, consts_ancillas = multiply_word_by_bit(bits2, bit, ancillas, consts2, consts1[index], circuit, index, stack)
+
+        add_one_bitset(ancillas, consts_ancillas, result_qword, circuit, local_stack)
+        # make ancillas |0> again
+        while not local_stack.is_empty():
+            local_stack.pop().apply(circuit)
