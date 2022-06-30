@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import List, Optional, Dict
+from settings import *
+from qiskit import QuantumCircuit, QuantumRegister
 from utils import *
-from qiskit import QuantumRegister, QuantumCircuit
 
 
 class QWord:
@@ -10,58 +11,71 @@ class QWord:
     """
     size_in_bits: int
     name: str
-    actual: Optional
-    previous: Optional
-    uncomputation_space: Optional
-    is_actual_constant: List[int]
-    is_previous_constant: List[int]
+    states: Dict[int, List[int]]  # we don't use a vector cause we will create qwords whose first record is
+    # not necessarily a first step
+    last_n: int
+    ancillas: Dict[int, QuantumRegister]
 
-    def __init__(self, name, size_in_bits: int = 64):
+    def __init__(self, size_in_bits: int = 64, name: str = ""):
+        """
+        @param size_in_bits: this is the number of bits that this 'piece of memory occupies'. Default is WORD_SIZE, a variable
+        declared at settings.py
+        :rtype: object
+        """
 
-        self.actual = None
-        self.previous = None
-        self.uncomputation_space = None
+        self.states = {}  # saves the transformations of qubits. Each element of this array is an array with
+        # size_in_bits elements. These elements are the names of the qubits that represent
+        # this variable in a given transformation.
         self.size_in_bits = size_in_bits
         self.name = name
+        self.last_n = -1
+
+    def __len__(self):
+        return len(self.states)
+
+    def __getitem__(self, i):
+        return self.states[i]
 
     def __repr__(self):
-        return self.name
+        return self.states.__str__()
 
-    def create_state(self, circuit: QuantumCircuit, set_previous=False) -> QuantumRegister:
+    def append_state(self, state: QuantumRegister, constants:List[int], n: int) -> None:
+        assert(len(state) == len(constants))
+        assert(len(state) == self.size_in_bits)
+        self.last_n = max(n, self.last_n)
+        self.states[n] = (state, constants)
 
-        if set_previous:
-            self.is_previous_constant = [0 for _ in range(self.size_in_bits)]
-            self.previous = QuantumRegister(self.size_in_bits, name=self.name)
-            circuit.add_register(self.previous)
-            return self.previous
-        else:
-            self.actual = QuantumRegister(self.size_in_bits, name=self.name)
-            self.is_actual_constant = [0 for _ in range(self.size_in_bits)]
-            circuit.add_register(self.actual)
-            return self.actual
+    def create_ancillas(self, n, size) -> QuantumRegister:
+        self.ancillas[n] = QuantumRegister(size)
+        return self.ancillas[n]
 
-    def create_uncomputation_qubits(self, circuit: QuantumCircuit) -> QuantumRegister:
-        self.uncomputation_space = QuantumRegister(self.size_in_bits, name="unc-"+self.name)
-        circuit.add_register(self.uncomputation_space)
-        return self.uncomputation_space
+    def create_state(self, circuit: QuantumCircuit, n: int) -> (QuantumRegister, List[int]):
+        """
+        creates a state with qubits in perfect superposition.
 
-    def is_actual_bit_constant(self, bit_index) -> bool:
-        return self.is_actual_constant[bit_index] != -1
-
-    def is_previous_bit_constant(self, bit_index) -> bool:
-        return self.is_previous_constant[bit_index] != -1
-
-    def force_current_state(self, current_state, are_constants):
-        self.actual = current_state
-        self.is_actual_constant = are_constants
+        @param bqm: binary quadratic model to update.
+        @return: the new state created
+        """
+        qubits = QuantumRegister(self.size_in_bits)
+        constants = [0 for _ in range(self.size_in_bits)]
+        circuit.add_register(qubits)
+        self.append_state(qubits, constants, n)
+        return qubits, constants
 
     @staticmethod
-    def are_all_constants(values):
-        for i in values:
-            if i == -1:
+    def are_all_constants(constants: List[int]) -> bool:
+        for c in constants:
+            if c == -1:
                 return False
         return True
 
+    def get_word_value(self, n: int) -> int:
+        _, word = self.states[n]
+        return get_decimal_representation(word)
 
-
-
+    @property
+    def top(self) -> (QuantumRegister, List[int]):
+        if self.states[self.last_n]:
+            if len(self.states[self.last_n]) > 0:
+                return self.states[self.last_n]
+        assert False
