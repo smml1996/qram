@@ -8,7 +8,7 @@ class Instruction:
     # BEGIN static attributes
     all_instructions: Dict[int, List[str]] = {}  # maps <sid> -> (list of tokens of the instruction)
     current_n = 0
-    circuit: QuantumCircuit
+    circuit: QuantumCircuit = QuantumCircuit()
     memory: Optional[QWord] = None
     qubits_to_fix: Dict[int, int] = {}  # maps qubit name to binary value to fix this qubits
     qubits_end_data_segment: Optional[QWord] = None  # last address data segment. It is not valid.
@@ -20,9 +20,9 @@ class Instruction:
     bad_states: List[int] = []
     bad_states_to_line_no: Dict[int, int] = {}
     input_nids: List[List[int]] = []
-    ONE_CONST: QuantumRegister
-    ZERO_CONST: QuantumRegister
-    global_stack: Stack
+    ONE_CONST: QuantumRegister = QuantumRegister(1)
+    ZERO_CONST: QuantumRegister = QuantumRegister(1)
+    global_stack: Stack = Stack()
     # model settings
     ADDRESS_WORD_SIZE = 4  # address are described by 32 bit numbers
 
@@ -58,7 +58,7 @@ class Instruction:
 
     def __init__(self, instruction: List[str]):
 
-        self.qubit_prefix = f"{instruction[0]}{instruction[1]}"
+        self.qubit_prefix = f"{instruction[1]}"
         self.instruction = instruction
         self.base_class = None
 
@@ -71,12 +71,6 @@ class Instruction:
         except IndexError:
             raise Exception(f'error parsing instruction: {" ".join(instruction)}')
 
-        self.ZERO_CONST = QuantumRegister(1, name="ZERO")
-        self.ONE_CONST = QuantumRegister(1, name="ONE")
-        Instruction.circuit.add_register(self.ZERO_CONST)
-        Instruction.circuit.add_register(self.ONE_CONST)
-        Instruction.circuit.x(self.ONE_CONST)
-        Instruction.initialize_memory_addresses()
 
     def set_instruction(self):
 
@@ -187,6 +181,7 @@ class Instruction:
                 state, consts = result_qword.top
                 Instruction.created_states_ids[self.id].append_state(state, consts, Instruction.current_n)
         else:
+
             result_qword = self.specific_subclass.execute()
             assert len(result_qword.states) == 1
             Instruction.created_states_ids[self.id] = result_qword
@@ -194,13 +189,13 @@ class Instruction:
         return Instruction.created_states_ids[self.id]
 
     @staticmethod
-    def get_constant_register(self, c, size):
+    def get_constant_register(c, size):
         result = []
         while len(result) < size:
             if c % 2 == 1:
-                result.append(self.ONE_CONST[0])
+                result.append(Instruction.ONE_CONST[0])
             else:
-                result.append(self.ZERO_CONST[0])
+                result.append(Instruction.ZERO_CONST[0])
             c /= 2
         return result
 
@@ -248,9 +243,13 @@ class Instruction:
 
     @staticmethod
     def or_bad_states():
-        raise Exception("Not implemented")
-        # optimized_bits_or(Instruction.bad_states, Instruction.circuit, Instruction.qubits_to_fix)
-        # return result  # returns the qubit name
+        if len(Instruction.bad_states) > 0:
+            result = QuantumRegister(1)
+            Instruction.circuit.add_register(result)
+            logic_or(Instruction.bad_states, result[0], Instruction.circuit, Instruction.global_stack)
+            return result  # returns the qubit name
+        else:
+            print("No bad state qubits!")
 
 
 class Init(Instruction):
@@ -288,22 +287,21 @@ class Input(Instruction):
             #
             # # we need a set of qubits for the current timestep
             if not (Instruction.current_n in Instruction.created_states_ids[self.id].states.keys()):
-                qubits, _ = result_qword.create_state(Instruction.circuit, Instruction.current_n)
+                qubits, constants = result_qword.create_state(Instruction.circuit, Instruction.current_n)
                 Instruction.input_nids.append(Instruction.created_states_ids[self.id][Instruction.current_n])
 
                 for (index, q) in enumerate(qubits):
                     Instruction.circuit.h(q)
-                    Instruction.is_constant[Instruction.current_n][index] = -1
+                    constants[Instruction.current_n][index] = -1
 
         else:
             # this instruction's id does not exists yet.
             assert (Instruction.current_n == 1)
             result_qword = QWord(sort.size_in_bits)
-            result_qword.name = f"{self.id}_input_{self.current_n}"
-            qubits, _ = result_qword.create_state(Instruction.circuit, 1)
+            qubits, constants = result_qword.create_state(Instruction.circuit, 1)
             for (index, q) in enumerate(qubits):
                 Instruction.circuit.h(q)
-                Instruction.is_constant[Instruction.current_n][index] = -1
+                constants[index] = -1
             Instruction.created_states_ids[self.id] = result_qword
             Instruction.input_nids.append(Instruction.created_states_ids[self.id][1])
         return Instruction.created_states_ids[self.id]  # result_qword
@@ -343,7 +341,7 @@ class State(Instruction):
         if self.is_new():
             sort = self.get_sort()
             qword = sort.execute()
-            qword.name = self.qubit_prefix
+            qword.name = self.name
 
             # returns a vector full of zeros, we use this to initialize memory with zeros
             bit_representation = get_bit_repr_of_number(0, qword.size_in_bits)
@@ -361,12 +359,14 @@ class State(Instruction):
                 # first element of this vector represents a 1. Used to initialize some qubits that represent this value
                 bit_representation = get_bit_repr_of_number(1, qword.size_in_bits)
 
-            if Instruction.initialize_states or self.instruction[1] in [CONSTD, ZERO, ONE]:
+            qubits, constants = qword.create_state(Instruction.circuit, 0)
+            if Instruction.initialize_states and self.instruction[1] in [CONSTD, ONE]:
                 # if flag is turn on or we are dealing with constants then we initialize this state/constant
-                qword.append_state(Instruction.get_constant_register(bit_representation, sort), bit_representation,
-                                   Instruction.current_n)
-            else:
-                qword.create_state(Instruction.circuit, 0)
+                for (index, bit) in enumerate(bit_representation):
+                    if bit == 1:
+                        Instruction.circuit.x(qubits[index])
+                        constants[index] = 1
+                        assert(qword[1][0][index] == 1)
         return Instruction.created_states_ids[self.id]
 
 
@@ -400,7 +400,7 @@ class Add(Instruction):
         qword_result.create_state(Instruction.circuit, Instruction.current_n)
 
         if self.instruction[1] == INC or self.instruction[1] == DEC:
-            qword_result.create_ancillas(Instruction.current_n, sort)
+            qword_result.create_ancillas(Instruction.current_n, sort, Instruction.circuit)
             if self.instruction == INC:
                 qword_result.ancillas[Instruction.current_n] = self.get_constant_register(1, sort)
             else:
@@ -456,7 +456,7 @@ class Mul(Instruction):
 
         qword_result = QWord(len(bitset1), self.name)
         qword_result.create_state(Instruction.circuit, Instruction.current_n)
-        qword_result.create_ancillas(Instruction.current_n, len(bitset1))
+        qword_result.create_ancillas(Instruction.current_n, len(bitset1), Instruction.circuit)
         optimized_mul(bitset1, bitset2, qword_result, constants1, constants2, Instruction.circuit,
                       qword_result.ancillas[Instruction.current_n], Instruction.global_stack, Instruction.current_n)
         return qword_result
@@ -467,7 +467,6 @@ class Ite(Instruction):
     def __init__(self, instruction):
         super().__init__(instruction)
 
-    @property
     def execute(self) -> Optional[QWord]:
         sort = self.get_sort().execute()
 
@@ -486,11 +485,12 @@ class Ite(Instruction):
         # assert true_qword.size_in_bits == sort.size_in_bits # this fails for memory
 
         # compute true part
-        qubit_condition = self.get_last_qubitset(condition.name, qword_condition)
+        qubit_condition, const_condition = self.get_last_qubitset(condition.name, qword_condition)
+
         assert len(qubit_condition) == 1
 
         result_qword = QWord(sort.size_in_bits)
-        if qubit_condition[0] in Instruction.qubits_to_fix.keys():
+        if const_condition[0] != -1:
             condition_value = Instruction.qubits_to_fix[qubit_condition[0]]
             if condition_value == 1:
                 true_qword = true_part.execute()  # only execute true part if we actually need it (condition==1)
@@ -510,13 +510,14 @@ class Ite(Instruction):
         result_bits, result_consts = result_qword.create_state(Instruction.circuit, Instruction.current_n)
 
         for (index, result_bit) in enumerate(result_bits):
+
             Instruction.circuit.ccx(qubit_condition[0], true_part_bits[index], result_bit)
             Instruction.global_stack.push(Element(GATE_TYPE, CCX, [qubit_condition[0], true_part_bits[index]],
                                                   result_bit))
 
         Instruction.circuit.x(qubit_condition[0])
         Instruction.global_stack.push(Element(GATE_TYPE, X, [], qubit_condition[0]))
-        for (index, result_bit) in enumerate(result_qword[Instruction.current_n]):
+        for (index, result_bit) in enumerate(result_bits):
             Instruction.circuit.ccx(qubit_condition[0], false_part_bits[index], result_bit)
             Instruction.global_stack.push(Element(GATE_TYPE, CCX, [qubit_condition[0], false_part_bits[index]],
                                                   result_bit))
@@ -533,7 +534,6 @@ class Ite(Instruction):
                     result_consts[index] = const_true_part
             else:
                 result_consts[index] = -1
-
         return result_qword
 
 
@@ -562,7 +562,7 @@ class Uext(Instruction):
         assert sort == ext_value + previous_qword.size_in_bits
 
         result = QWord(sort, self.name)
-        result.create_ancillas(Instruction.current_n, ext_value)
+        result.create_ancillas(Instruction.current_n, ext_value, Instruction.circuit)
 
         result_qubits = []
 
@@ -627,7 +627,8 @@ class Eq(Instruction):
 
         result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(self.get_sort().execute().size_in_bits + 1, Instruction.current_n)
+        ancillas = result_qword.create_ancillas(Instruction.current_n, self.get_sort().execute().size_in_bits + 1,
+                                                Instruction.circuit)
         optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                            Instruction.global_stack, Instruction.current_n)
         return result_qword
@@ -648,7 +649,8 @@ class Neq(Instruction):
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
         result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
         result_bits, result_constants = result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(self.get_sort().execute().size_in_bits + 1, Instruction.current_n)
+        ancillas = result_qword.create_ancillas(Instruction.current_n, self.get_sort().execute().size_in_bits + 1,
+                                                Instruction.circuit)
         Instruction.circuit.x(ancillas[ancillas.size - 1])
         optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                            Instruction.global_stack, Instruction.current_n)
@@ -674,9 +676,10 @@ class Ult(Instruction):
 
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
-        result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
+        result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(2 + self.get_sort().execute().size_in_bits - 1, Instruction.current_n)
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + self.get_sort().execute().size_in_bits - 1,
+                                                Instruction.circuit)
         optimized_unsigned_ult(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
                                ancillas, Instruction.global_stack, Instruction.current_n)
 
@@ -698,9 +701,9 @@ class Ulte(Instruction):
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
 
-        result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
+        result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(2 + sort - 1 + 2 + sort + 1, Instruction.current_n)
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort - 1 + 2 + sort + 1, Instruction.circuit)
         optimized_unsigned_ulte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                 Instruction.global_stack, Instruction.current_n)
 
@@ -722,9 +725,9 @@ class Ugt(Instruction):
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
 
         sort = self.get_sort().execute().size_in_bits
-        result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
+        result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(2 + sort - 1 + 2 + sort + 1, Instruction.current_n)
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort - 1 + 2 + sort + 1, Instruction.circuit)
         optimized_unsigned_ugt(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                Instruction.global_stack, Instruction.current_n)
 
@@ -745,9 +748,9 @@ class Ugte(Instruction):
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
         sort = self.get_sort().execute().size_in_bits
-        result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
+        result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(2 + sort - 1 + 2 + sort + 1, Instruction.current_n)
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort - 1 + 2 + sort + 1, Instruction.circuit)
         optimized_unsigned_ugte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                 Instruction.global_stack, Instruction.current_n)
 
@@ -843,7 +846,7 @@ class Bad(Instruction):
         qword_result = QWord(1)
         qword_result.append_state(bad_state_qubits, are_constants, Instruction.current_n)
         assert (len(are_constants) == 1)
-        if are_constants == -1:
+        if are_constants[0] == -1:
             # only care if this bad state does not evaluates no a concrete value
             Instruction.bad_states.append(bad_state_qubits[0])
             Instruction.bad_states_to_line_no[bad_state_qubits[0]] = self.id

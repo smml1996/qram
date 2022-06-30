@@ -28,13 +28,13 @@ def optimized_bitwise_not(x: QuantumRegister, y: QuantumRegister,constants_x: Li
 def optimized_is_equal(bitset1: QuantumRegister, bitset2: QuantumRegister, result_qword: QWord, constants1: List[int],
                        constants2: List[int], circuit: QuantumCircuit, ancillas: QuantumRegister, stack: Stack, n:int) -> QuantumRegister:
         assert(bitset1.size == bitset2.size)
-        assert(ancillas.size == bitset1.size)
+        assert(len(ancillas) == bitset1.size)
 
         result_bits, result_constants = result_qword[n]
         assert(result_qword.size_in_bits == 1)
         assert(result_constants[0]==0)
 
-        dummy_logic_one = ancillas[ancillas.size-1]
+        dummy_logic_one = ancillas[len(ancillas)-1]
 
         control_qubits = []
 
@@ -146,14 +146,15 @@ def add_one_bitset(bitset: QuantumRegister, constants: List[int], result_qword: 
             carry = (constants[index] + result_constants[index] + carry) > 2
         for i in range(index, len(result_qubits)):
             # add control qubits
-            qubits = result_qubits[index:(sort - 1 - i)]
+            qubits = result_qubits[index:(sort - 1 - i) + index]
+
             qubits.append(qubit)
 
             gate = MCXGate(len(qubits))
-            stack.push(Element(GATE_TYPE, MCX, qubits, result_qubits[sort - 1 - i]))
+            stack.push(Element(GATE_TYPE, MCX, qubits, result_qubits[sort - 1 - i+ index]))
 
             # add target qubit
-            qubits.append(result_qubits[sort - 1 - i])
+            qubits.append(result_qubits[sort - 1 - i + index])
             circuit.append(gate, qubits)
 
 def optimized_get_twos_complement(bitset: QuantumRegister, circuit: QuantumCircuit, global_stack) -> Stack:
@@ -161,13 +162,14 @@ def optimized_get_twos_complement(bitset: QuantumRegister, circuit: QuantumCircu
 
     for bit in bitset:
         circuit.x(bit)
+        stack.push(Element(GATE_TYPE, X, [], bit))
         global_stack.push(Element(GATE_TYPE, X, [], bit))
 
     for i in range(len(bitset)-1):
         qubits = bitset[:len(bitset)-i-1]
         gate = MCXGate(len(qubits))
         stack.push(Element(GATE_TYPE, MCX, qubits, bitset[len(bitset)-i-1]))
-        global_stack.push(Element(GATE_TYPE, MCX, qubits, bitset[len(bitset) - i - 1]))
+        global_stack.push(Element(GATE_TYPE, MCX, qubits, bitset[len(bitset)-i-1]))
         qubits.append(bitset[len(bitset)-i-1])
         circuit.append(gate, qubits)
     circuit.x(bitset[0])
@@ -212,7 +214,7 @@ def optimized_unsigned_ult(bits1: QuantumRegister, bits2: QuantumRegister, resul
 
     while not local_stack.is_empty():
         element = local_stack.pop()
-        element.apply()
+        element.apply(circuit)
         stack.push(element)
 
 
@@ -247,8 +249,8 @@ def optimized_unsigned_ulte(bits1: QuantumRegister, bits2: QuantumRegister, resu
 
     lte_result_qubit = ancillas[len(ancillas)-1]
     eq_result_qubit = ancillas[len(ancillas)-2]
-    register_lte = QuantumRegister(bits=lte_result_qubit)
-    register_eq = QuantumRegister(bits=eq_result_qubit)
+    register_lte = QuantumRegister(bits=[lte_result_qubit])
+    register_eq = QuantumRegister(bits=[eq_result_qubit])
     qword_lte = QWord(1)
     qword_lte.append_state(register_lte, [0], n)
     qword_eq = QWord(1)

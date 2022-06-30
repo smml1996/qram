@@ -29,6 +29,7 @@ class QWord:
         self.size_in_bits = size_in_bits
         self.name = name
         self.last_n = -1
+        self.ancillas = {}
 
     def __len__(self):
         return len(self.states)
@@ -45,8 +46,9 @@ class QWord:
         self.last_n = max(n, self.last_n)
         self.states[n] = (state, constants)
 
-    def create_ancillas(self, n, size) -> QuantumRegister:
+    def create_ancillas(self, n, size, circuit) -> QuantumRegister:
         self.ancillas[n] = QuantumRegister(size)
+        circuit.add_register(self.ancillas[n])
         return self.ancillas[n]
 
     def create_state(self, circuit: QuantumCircuit, n: int) -> (QuantumRegister, List[int]):

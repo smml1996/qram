@@ -23,7 +23,7 @@ class Element:
     def __init__(self, element_type, gate_name, controls, target):
         self.element_type = element_type
         self.gate_name = gate_name
-        self.operands = controls
+        self.operands = deepcopy(controls)
         self.target = target
 
     def apply(self, circuit: QuantumCircuit):
@@ -40,8 +40,8 @@ class Element:
                 assert(len(self.operands) == 2)
                 circuit.ccx(self.operands[0], self.operands[1], self.target)
             elif self.gate_name == MCX:
-                control_qubits = deepcopy(self.controls)
-                gate = MCXGate(len(self.controls))
+                control_qubits = deepcopy(self.operands)
+                gate = MCXGate(len(self.operands))
                 control_qubits.append(self.target)
                 circuit.append(gate, control_qubits)
             else:
@@ -56,7 +56,7 @@ class Queue:
         self.size = 0
 
     def push(self, element: Element):
-        self.push(element)
+        self.data_structure.append(element)
         self.size += 1
 
     def is_empty(self):
@@ -78,7 +78,7 @@ class Stack:
         self.size = 0
 
     def push(self, element: Element):
-        self.push(element)
+        self.data_structure.append(element)
         self.size += 1
 
     def is_empty(self):
