@@ -651,7 +651,7 @@ class Neq(Instruction):
         operand2_qword = operand2.execute()
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
-        result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
+        result_qword = QWord(1, self.name)
         result_bits, result_constants = result_qword.create_state(Instruction.circuit, Instruction.current_n)
         ancillas = result_qword.create_ancillas(Instruction.current_n, self.get_sort().execute().size_in_bits + 1,
                                                 Instruction.circuit)
