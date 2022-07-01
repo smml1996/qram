@@ -51,14 +51,17 @@ class QWord:
         circuit.add_register(self.ancillas[n])
         return self.ancillas[n]
 
-    def create_state(self, circuit: QuantumCircuit, n: int) -> (QuantumRegister, List[int]):
+    def create_state(self, circuit: QuantumCircuit, n: int, set_name=False) -> (QuantumRegister, List[int]):
         """
         creates a state with qubits in perfect superposition.
 
         @param bqm: binary quadratic model to update.
         @return: the new state created
         """
-        qubits = QuantumRegister(self.size_in_bits)
+        if not set_name:
+            qubits = QuantumRegister(self.size_in_bits)
+        else:
+            qubits = QuantumRegister(self.size_in_bits, self.name)
         constants = [0 for _ in range(self.size_in_bits)]
         circuit.add_register(qubits)
         self.append_state(qubits, constants, n)

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from settings import *
 from utils import *
 from qword_tools import *
@@ -130,7 +132,7 @@ class Instruction:
             raise Exception(f"Not valid instruction: {self}")
 
     def get_last_qubitset(self, name: str, qword: QWord) -> (QuantumRegister, List[int]):
-        if name in [STATE, INPUT]:
+        if name in [STATE]:
             if self.current_n - 1 in qword.states.keys():
                 return qword[self.current_n - 1]
             else:
@@ -292,7 +294,7 @@ class Input(Instruction):
 
                 for (index, q) in enumerate(qubits):
                     Instruction.circuit.h(q)
-                    constants[Instruction.current_n][index] = -1
+                    constants[index] = -1
 
         else:
             # this instruction's id does not exists yet.
@@ -366,7 +368,7 @@ class State(Instruction):
                     if bit == 1:
                         Instruction.circuit.x(qubits[index])
                         constants[index] = 1
-                        assert(qword[1][0][index] == 1)
+                        assert(qword[0][1][index] == 1)
         return Instruction.created_states_ids[self.id]
 
 
@@ -454,8 +456,9 @@ class Mul(Instruction):
         bitset1, constants1 = self.get_last_qubitset(operand1.name, qword_operand1)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, qword_operand2)
 
+        print("len bitset1", len(bitset1))
         qword_result = QWord(len(bitset1), self.name)
-        qword_result.create_state(Instruction.circuit, Instruction.current_n)
+        qword_result.create_state(Instruction.circuit, Instruction.current_n, True)
         qword_result.create_ancillas(Instruction.current_n, len(bitset1), Instruction.circuit)
         optimized_mul(bitset1, bitset2, qword_result, constants1, constants2, Instruction.circuit,
                       qword_result.ancillas[Instruction.current_n], Instruction.global_stack, Instruction.current_n)
@@ -625,10 +628,11 @@ class Eq(Instruction):
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
 
-        result_qword = QWord(self.get_sort().execute().size_in_bits, self.name)
-        result_qword.create_state(Instruction.circuit, Instruction.current_n)
+        result_qword = QWord(1, self.name)
+        result_qword.create_state(Instruction.circuit, Instruction.current_n, True)
         ancillas = result_qword.create_ancillas(Instruction.current_n, self.get_sort().execute().size_in_bits + 1,
                                                 Instruction.circuit)
+
         optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                            Instruction.global_stack, Instruction.current_n)
         return result_qword
@@ -705,7 +709,14 @@ class Ulte(Instruction):
 
         result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort - 1 + 2 + sort + 1, Instruction.circuit)
+        # ancillas =
+        # LTE uses: 2 ancillas to add to each operand to perform substraction, sort to store the addition
+        # (we actually need sort+1 to store addition, but we use result_qword to store the MSB).
+
+        # 1 ancilla to save the result of LTE
+        # 1 ancilla to save the result of EQ
+        # EQ uses sort+1 ancillas
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort + 2 + sort +1, Instruction.circuit)
         optimized_unsigned_ulte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                 Instruction.global_stack, Instruction.current_n)
 
@@ -729,7 +740,9 @@ class Ugt(Instruction):
         sort = self.get_sort().execute().size_in_bits
         result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort - 1 + 2 + sort + 1, Instruction.circuit)
+        # ancillas = 2 ancillas to add to each operand to perform substraction, sort to store the addition
+        # (we actually need sort+1 to store addition, but we use result_qword to store the MSB).
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort, Instruction.circuit)
         optimized_unsigned_ugt(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                Instruction.global_stack, Instruction.current_n)
 
@@ -751,8 +764,15 @@ class Ugte(Instruction):
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
         sort = self.get_sort().execute().size_in_bits
         result_qword = QWord(1, self.name)
-        result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort - 1 + 2 + sort + 1, Instruction.circuit)
+        result_qword.create_state(Instruction.circuit, Instruction.current_n, True)
+        # ancillas =
+        # LTE uses: 2 ancillas to add to each operand to perform substraction, sort to store the addition
+        # (we actually need sort+1 to store addition, but we use result_qword to store the MSB).
+
+        # 1 ancilla to save the result of LTE
+        # 1 ancilla to save the result of EQ
+        # EQ uses sort+1 ancillas
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort + 2 + sort +1, Instruction.circuit)
         optimized_unsigned_ugte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                 Instruction.global_stack, Instruction.current_n)
 
@@ -781,14 +801,15 @@ class Udiv(Instruction):
 
             result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
             result_qword = QWord(sort, self.name)
-            result_bits, result_consts = result_qword.create_state(Instruction.circuit, Instruction.current_n)
+            result_bits, result_consts = result_qword.create_state(Instruction.circuit, Instruction.current_n, True)
 
             for (index, res) in enumerate(result_in_binary):
                 assert (result_consts[index] == 0)
-                Instruction.circuit.x(result_bits[index])
-                Instruction.global_stack.push(
-                    Element(GATE_TYPE, X, [], result_bits[index]))
-                result_bits[index] = 1
+                if res == 1:
+                    Instruction.circuit.x(result_bits[index])
+                    Instruction.global_stack.push(
+                        Element(GATE_TYPE, X, [], result_bits[index]))
+                    result_consts[index] = 1
             return result_qword
         raise Exception("not implemented")
 
@@ -815,14 +836,15 @@ class Urem(Instruction):
 
             result_in_binary = get_bit_repr_of_number(result_in_decimal, len(bitset1))
             result_qword = QWord(sort, self.name)
-            result_bits, result_consts = result_qword.create_state(Instruction.circuit, Instruction.current_n)
+            result_bits, result_consts = result_qword.create_state(Instruction.circuit, Instruction.current_n, True)
 
             for (index, res) in enumerate(result_in_binary):
                 assert (result_consts[index] == 0)
-                Instruction.circuit.x(result_bits[index])
-                Instruction.global_stack.push(
-                    Element(GATE_TYPE, X, [], result_bits[index]))
-                result_bits[index] = 1
+                if res == 1:
+                    Instruction.circuit.x(result_bits[index])
+                    Instruction.global_stack.push(
+                        Element(GATE_TYPE, X, [], result_bits[index]))
+                    result_consts[index] = 1
             return result_qword
         raise Exception("not implemented")
 
