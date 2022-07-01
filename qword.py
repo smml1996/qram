@@ -47,7 +47,7 @@ class QWord:
         self.states[n] = (state, constants)
 
     def create_ancillas(self, n, size, circuit) -> QuantumRegister:
-        self.ancillas[n] = QuantumRegister(size)
+        self.ancillas[n] = QuantumRegister(size, name="an")
         circuit.add_register(self.ancillas[n])
         return self.ancillas[n]
 

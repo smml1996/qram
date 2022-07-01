@@ -668,6 +668,7 @@ class Ult(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
+        sort = self.get_sort().execute().size_in_bits
         operand1 = Instruction(self.get_instruction_at_index(3))
         operand1_qword = operand1.execute()
 
@@ -678,8 +679,9 @@ class Ult(Instruction):
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
         result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + self.get_sort().execute().size_in_bits - 1,
-                                                Instruction.circuit)
+        # ancillas = 2 ancillas to add to each operand to perform substraction, sort to store the addition
+        # (we actually need sort+1 to store addition, but we use result_qword to store the MSB).
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort, Instruction.circuit)
         optimized_unsigned_ult(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
                                ancillas, Instruction.global_stack, Instruction.current_n)
 

@@ -19,12 +19,18 @@ class Element:
     gate_name: str
     controls: List[Any]
     target: Any
+    mcx_gate_index:int = 0
 
     def __init__(self, element_type, gate_name, controls, target):
         self.element_type = element_type
         self.gate_name = gate_name
         self.operands = deepcopy(controls)
         self.target = target
+
+    @staticmethod
+    def get_mcx_gate_index() -> int:
+        Element.mcx_gate_index +=1
+        return Element.mcx_gate_index
 
     def apply(self, circuit: QuantumCircuit):
         if type == CHECKPOINT_TYPE:
@@ -40,10 +46,11 @@ class Element:
                 assert(len(self.operands) == 2)
                 circuit.ccx(self.operands[0], self.operands[1], self.target)
             elif self.gate_name == MCX:
-                control_qubits = deepcopy(self.operands)
-                gate = MCXGate(len(self.operands))
-                control_qubits.append(self.target)
-                circuit.append(gate, control_qubits)
+                # control_qubits = deepcopy(self.operands)
+                #
+                # gate=MCXGate(len(self.operands))
+                # control_qubits.append(self.target)
+                circuit.mcx(self.operands, self.target)
             else:
                 raise Exception(f"Invalid stack element with gate {self.gate_name}")
 

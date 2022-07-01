@@ -33,4 +33,4 @@ Instruction.or_bad_states()
 #     Instruction.global_stack.pop().apply(Instruction.circuit)
 
 # TODO: logic-OR bad states
-Instruction.circuit.qasm(filename=output_file)
+Instruction.circuit.qasm(filename=output_file,formatted=True)
