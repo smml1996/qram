@@ -1,4 +1,5 @@
 from typing import List, Dict
+from qiskit import QuantumRegister, QuantumCircuit
 
 
 def read_file(filename: str, modify_memory_sort: bool = False, setting: Dict[str, int] = None):
@@ -152,3 +153,16 @@ def get_btor2_settings(filename: str) -> Dict[str, int]:
         result["begin_stack"] = 4294967296
     # assert len(result.keys()) == 9
     return result
+
+
+def apply_amplitude_amplification(qubits: QuantumRegister, circuit: QuantumCircuit):
+    circuit.h(qubits)
+    circuit.x(qubits)
+
+    # multi-controlled Z
+    circuit.h(qubits[0])
+    circuit.mct(qubits[1:], qubits[0])
+    circuit.h(qubits[0])
+
+    circuit.x(qubits)
+    circuit.h(qubits)

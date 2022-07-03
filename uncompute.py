@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Optional
 from qiskit import QuantumCircuit
 from copy import deepcopy
 from collections import deque
@@ -84,16 +84,32 @@ class Stack:
         self.data_structure = deque()
         self.size = 0
 
-    def push(self, element: Element):
+    def push(self, element: Element) -> None:
         self.data_structure.append(element)
         self.size += 1
 
-    def is_empty(self):
+    def is_empty(self) -> int:
         return self.size == 0
 
-    def pop(self):
+    def pop(self) -> Optional[Element]:
         if self.size == 0:
             return None
         self.size -= 1
         return self.data_structure.pop()
 
+
+
+def apply_and_reverse_stack(stack: Stack, circuit: QuantumCircuit):
+
+    initial_size = stack.size
+    temp_queue = Queue()
+
+    while not stack.is_empty():
+        element: Element = stack.pop()
+        element.apply(circuit)
+        temp_queue.push(element)
+
+    while not temp_queue.is_empty():
+        stack.push(temp_queue.pop())
+
+    assert(stack.size == initial_size)

@@ -243,7 +243,7 @@ def logic_or(controls, result_bit, circuit, stack):
         stack.push(Element(GATE_TYPE, X, [], bit))
 
     # gate = MCXGate(len(controls))
-    stack.push(Element(GATE_TYPE, MCX, controls, result_bit))
+    # stack.push(Element(GATE_TYPE, MCX, controls, result_bit))
     # controls.append(result_bit)
     # circuit.append(gate, controls)
     circuit.mcx(controls, result_bit)

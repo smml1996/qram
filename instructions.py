@@ -21,10 +21,11 @@ class Instruction:
     initialize_states: bool = True
     bad_states: List[int] = []
     bad_states_to_line_no: Dict[int, int] = {}
-    input_nids: List[List[int]] = []
+    input_nids: List[QWord] = []
     ONE_CONST: QuantumRegister = QuantumRegister(1)
     ZERO_CONST: QuantumRegister = QuantumRegister(1)
     global_stack: Stack = Stack()
+    with_grover: int = 0
     # model settings
     ADDRESS_WORD_SIZE = 4  # address are described by 32 bit numbers
 
@@ -57,6 +58,17 @@ class Instruction:
         Instruction.BEGIN_STACK = setting['begin_stack']
         Instruction.SIZE_STACK = setting['size_stack']
         Instruction.WORD_SIZE = setting['word_size']
+
+
+    @staticmethod
+    def get_input_qubits() -> QuantumRegister:
+        input_qubits = []
+        for qword in Instruction.input_nids:
+            for timestep in range(Instruction.current_n):
+                if timestep in qword.states.keys():
+                    register, _ = qword[timestep]
+                    input_qubits.extend(register[:])
+        return QuantumRegister(bits=input_qubits)
 
     def __init__(self, instruction: List[str]):
 
@@ -244,14 +256,19 @@ class Instruction:
         return True
 
     @staticmethod
-    def or_bad_states():
+    def or_bad_states() -> Optional[QuantumRegister]:
         if len(Instruction.bad_states) > 0:
             result = QuantumRegister(1)
             Instruction.circuit.add_register(result)
+            if Instruction.with_grover == 1:
+                print("Initializing or-bad-states result to |->")
+                Instruction.circuit.x(result)
+                Instruction.circuit.h(result)
             logic_or(Instruction.bad_states, result[0], Instruction.circuit, Instruction.global_stack)
             return result  # returns the qubit name
         else:
             print("No bad state qubits!")
+            return None
 
 
 class Init(Instruction):
@@ -290,8 +307,6 @@ class Input(Instruction):
             # # we need a set of qubits for the current timestep
             if not (Instruction.current_n in Instruction.created_states_ids[self.id].states.keys()):
                 qubits, constants = result_qword.create_state(Instruction.circuit, Instruction.current_n)
-                Instruction.input_nids.append(Instruction.created_states_ids[self.id][Instruction.current_n])
-
                 for (index, q) in enumerate(qubits):
                     Instruction.circuit.h(q)
                     constants[index] = -1
@@ -305,7 +320,7 @@ class Input(Instruction):
                 Instruction.circuit.h(q)
                 constants[index] = -1
             Instruction.created_states_ids[self.id] = result_qword
-            Instruction.input_nids.append(Instruction.created_states_ids[self.id][1])
+            Instruction.input_nids.append(Instruction.created_states_ids[self.id])
         return Instruction.created_states_ids[self.id]  # result_qword
 
 
@@ -369,6 +384,7 @@ class State(Instruction):
                         Instruction.circuit.x(qubits[index])
                         constants[index] = 1
                         assert(qword[0][1][index] == 1)
+                        Instruction.global_stack.push(Element(GATE_TYPE, X, [], qubits[index]))
         return Instruction.created_states_ids[self.id]
 
 
