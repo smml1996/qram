@@ -46,18 +46,20 @@ if generate_with_grover:
 
     # initialize gout in |->
     Instruction.circuit.x(gout)
-    # Instruction.circuit.h(gout)
+    Instruction.circuit.h(gout)
 
     # mark answers
-    Instruction.circuit.cz(result_bad_states[0], gout[0])
+    Instruction.circuit.cx(result_bad_states[0], gout[0])
 
 
-    # uncompute
-    apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
+
 
     Instruction.circuit.barrier()
     apply_amplitude_amplification(input_qubits, Instruction.circuit)
 
+    Instruction.circuit.barrier()
+    # uncompute
+    apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
     Instruction.circuit.barrier()
     iterations = int(sqrt(2**len(input_qubits)))
 
@@ -71,20 +73,23 @@ if generate_with_grover:
         apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
         # mark answers
-        Instruction.circuit.cz(result_bad_states[0], gout[0])
+        Instruction.circuit.cx(result_bad_states[0], gout[0])
 
-        #uncompute
-        apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
+
 
         Instruction.circuit.barrier()
         apply_amplitude_amplification(input_qubits, Instruction.circuit)
         Instruction.circuit.barrier()
 
+        # uncompute
+        apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
-    classical_register = ClassicalRegister(len(input_qubits))
-    Instruction.circuit.add_register(classical_register)
 
-    Instruction.circuit.measure(input_qubits, classical_register)
+    # classical_register = ClassicalRegister(len(input_qubits))
+    # Instruction.circuit.add_register(classical_register)
+    #
+    # Instruction.circuit.measure(input_qubits, classical_register)
+    Instruction.circuit.measure_all()
 
 Instruction.circuit.qasm(filename=output_file,formatted=True)
 
