@@ -156,12 +156,13 @@ def get_btor2_settings(filename: str) -> Dict[str, int]:
 
 
 def apply_amplitude_amplification(qubits: QuantumRegister, circuit: QuantumCircuit):
+
     circuit.h(qubits)
     circuit.x(qubits)
 
     # multi-controlled Z
     circuit.h(qubits[0])
-    circuit.mct(qubits[1:], qubits[0])
+    circuit.mcx(qubits[1:], qubits[0])
     circuit.h(qubits[0])
 
     circuit.x(qubits)

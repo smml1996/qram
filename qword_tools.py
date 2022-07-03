@@ -237,20 +237,30 @@ def optimized_unsigned_ugt(bits1: QuantumRegister, bits2: QuantumRegister, resul
 
 
 def logic_or(controls, result_bit, circuit, stack):
-    assert(len(controls) > 0)
-    for bit in controls:
-        circuit.x(bit)
-        stack.push(Element(GATE_TYPE, X, [], bit))
+    if len(controls) == 1:
+        for bit in controls:
+            circuit.x(bit)
+            stack.push(Element(GATE_TYPE, X, [], bit))
+        circuit.cx(controls[0], result_bit)
+        stack.push(Element(GATE_TYPE, CX, controls, result_bit))
+    else:
+        circuit.x(result_bit)
+        stack.push(Element(GATE_TYPE, X, [], result_bit))
 
-    # gate = MCXGate(len(controls))
-    # stack.push(Element(GATE_TYPE, MCX, controls, result_bit))
-    # controls.append(result_bit)
-    # circuit.append(gate, controls)
-    circuit.mcx(controls, result_bit)
+        assert(len(controls) > 0)
+        for bit in controls:
+            circuit.x(bit)
+            stack.push(Element(GATE_TYPE, X, [], bit))
 
-    for bit in controls:
-        circuit.x(bit)
-        stack.push(Element(GATE_TYPE, X, [], bit))
+        # gate = MCXGate(len(controls))
+        stack.push(Element(GATE_TYPE, MCX, controls, result_bit))
+        # controls.append(result_bit)
+        # circuit.append(gate, controls)
+        circuit.mcx(controls, result_bit)
+
+    # for bit in controls:
+    #     circuit.x(bit)
+    #     stack.push(Element(GATE_TYPE, X, [], bit))
 
 
 def optimized_unsigned_ulte(bits1: QuantumRegister, bits2: QuantumRegister, result_qword: QWord,

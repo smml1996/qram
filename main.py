@@ -2,7 +2,7 @@ import sys
 from utils import *
 from instructions import Instruction
 from settings import *
-from qiskit import QuantumRegister
+from qiskit import QuantumRegister, ClassicalRegister
 from math import sqrt
 from uncompute import *
 
@@ -30,28 +30,61 @@ for i in range(1, n+1):
         elif instruction[1] == NEXT or instruction[1] == BAD:
             Instruction(instruction).execute()
 
-Instruction.or_bad_states()
+result_bad_states = Instruction.or_bad_states()
+assert(len(result_bad_states) == 1)
 
 
 if generate_with_grover:
 
     input_qubits = Instruction.get_input_qubits()
+    print(len(input_qubits))
+
+    gout = QuantumRegister(1, "gout")
+    assert(len(gout) == 1)
+
+    Instruction.circuit.add_register(gout)
+
+    # initialize gout in |->
+    Instruction.circuit.x(gout)
+    # Instruction.circuit.h(gout)
+
+    # mark answers
+    Instruction.circuit.cz(result_bad_states[0], gout[0])
+
 
     # uncompute
     apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
+    Instruction.circuit.barrier()
     apply_amplitude_amplification(input_qubits, Instruction.circuit)
 
+    Instruction.circuit.barrier()
     iterations = int(sqrt(2**len(input_qubits)))
 
-    for i in range(iterations):
+    # marked states undo:
+    # Instruction.circuit.h(gout)
+
+    print("Grover will need ",iterations, "iterations.")
+
+    for i in range(iterations-1):
         # compute
         apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
+
+        # mark answers
+        Instruction.circuit.cz(result_bad_states[0], gout[0])
+
         #uncompute
         apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
+        Instruction.circuit.barrier()
         apply_amplitude_amplification(input_qubits, Instruction.circuit)
+        Instruction.circuit.barrier()
 
-    Instruction.circuit.measure_active()
+
+    classical_register = ClassicalRegister(len(input_qubits))
+    Instruction.circuit.add_register(classical_register)
+
+    Instruction.circuit.measure(input_qubits, classical_register)
 
 Instruction.circuit.qasm(filename=output_file,formatted=True)
+

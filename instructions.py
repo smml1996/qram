@@ -64,7 +64,7 @@ class Instruction:
     def get_input_qubits() -> QuantumRegister:
         input_qubits = []
         for qword in Instruction.input_nids:
-            for timestep in range(Instruction.current_n):
+            for timestep in range(Instruction.current_n+1):
                 if timestep in qword.states.keys():
                     register, _ = qword[timestep]
                     input_qubits.extend(register[:])
@@ -260,10 +260,6 @@ class Instruction:
         if len(Instruction.bad_states) > 0:
             result = QuantumRegister(1)
             Instruction.circuit.add_register(result)
-            if Instruction.with_grover == 1:
-                print("Initializing or-bad-states result to |->")
-                Instruction.circuit.x(result)
-                Instruction.circuit.h(result)
             logic_or(Instruction.bad_states, result[0], Instruction.circuit, Instruction.global_stack)
             return result  # returns the qubit name
         else:
@@ -314,8 +310,8 @@ class Input(Instruction):
         else:
             # this instruction's id does not exists yet.
             assert (Instruction.current_n == 1)
-            result_qword = QWord(sort.size_in_bits)
-            qubits, constants = result_qword.create_state(Instruction.circuit, 1)
+            result_qword = QWord(sort.size_in_bits, f"in{self.id}")
+            qubits, constants = result_qword.create_state(Instruction.circuit, 1, set_name=True)
             for (index, q) in enumerate(qubits):
                 Instruction.circuit.h(q)
                 constants[index] = -1
@@ -886,12 +882,12 @@ class Bad(Instruction):
         qword_result = QWord(1)
         qword_result.append_state(bad_state_qubits, are_constants, Instruction.current_n)
         assert (len(are_constants) == 1)
-        if are_constants[0] == -1:
+        # if are_constants[0] == -1:
             # only care if this bad state does not evaluates no a concrete value
-            Instruction.bad_states.append(bad_state_qubits[0])
-            Instruction.bad_states_to_line_no[bad_state_qubits[0]] = self.id
-        else:
-            print("bad state value found:", self.name, "->", are_constants[0])
+        Instruction.bad_states.append(bad_state_qubits[0])
+        Instruction.bad_states_to_line_no[bad_state_qubits[0]] = self.id
+        # else:
+        #     print("bad state value found:", self.name, "->", are_constants[0])
         return qword_result
 
 
