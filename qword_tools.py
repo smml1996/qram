@@ -238,9 +238,6 @@ def optimized_unsigned_ugt(bits1: QuantumRegister, bits2: QuantumRegister, resul
 
 def logic_or(controls, result_bit, circuit, stack):
     if len(controls) == 1:
-        for bit in controls:
-            circuit.x(bit)
-            stack.push(Element(GATE_TYPE, X, [], bit))
         circuit.cx(controls[0], result_bit)
         stack.push(Element(GATE_TYPE, CX, controls, result_bit))
     else:

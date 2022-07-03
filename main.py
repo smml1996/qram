@@ -3,7 +3,7 @@ from utils import *
 from instructions import Instruction
 from settings import *
 from qiskit import QuantumRegister, ClassicalRegister
-from math import sqrt
+from math import sqrt, ceil
 from uncompute import *
 
 n = int(sys.argv[1])
@@ -37,7 +37,14 @@ assert(len(result_bad_states) == 1)
 if generate_with_grover:
 
     input_qubits = Instruction.get_input_qubits()
-    print(len(input_qubits))
+    # dumb = QuantumRegister(1)
+    # Instruction.circuit.add_register(dumb)
+    # Instruction.circuit.h(dumb)
+    # print("len input", len(input_qubits))
+    # temp = input_qubits[:]
+    # temp.extend(dumb[:])
+    # input_qubits = QuantumRegister(bits=temp)
+    # print("len input",len(input_qubits))
 
     gout = QuantumRegister(1, "gout")
     assert(len(gout) == 1)
@@ -49,17 +56,15 @@ if generate_with_grover:
     Instruction.circuit.h(gout)
 
     # mark answers
+    Instruction.circuit.barrier()
     Instruction.circuit.cx(result_bad_states[0], gout[0])
-
-
-
+    Instruction.circuit.barrier()
+    # uncompute
+    apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
     Instruction.circuit.barrier()
     apply_amplitude_amplification(input_qubits, Instruction.circuit)
 
-    Instruction.circuit.barrier()
-    # uncompute
-    apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
     Instruction.circuit.barrier()
     iterations = int(sqrt(2**len(input_qubits)))
 
@@ -72,24 +77,22 @@ if generate_with_grover:
         # compute
         apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
+        Instruction.circuit.barrier()
         # mark answers
         Instruction.circuit.cx(result_bad_states[0], gout[0])
-
-
-
         Instruction.circuit.barrier()
+        # uncompute
+        apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
+        Instruction.circuit.barrier()
+
         apply_amplitude_amplification(input_qubits, Instruction.circuit)
         Instruction.circuit.barrier()
 
-        # uncompute
-        apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
+    classical_register = ClassicalRegister(len(input_qubits))
+    Instruction.circuit.add_register(classical_register)
 
-    # classical_register = ClassicalRegister(len(input_qubits))
-    # Instruction.circuit.add_register(classical_register)
-    #
-    # Instruction.circuit.measure(input_qubits, classical_register)
-    Instruction.circuit.measure_all()
+    Instruction.circuit.measure(input_qubits, classical_register)
 
 Instruction.circuit.qasm(filename=output_file,formatted=True)
 

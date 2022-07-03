@@ -155,7 +155,7 @@ def get_btor2_settings(filename: str) -> Dict[str, int]:
     return result
 
 
-def apply_amplitude_amplification(qubits: QuantumRegister, circuit: QuantumCircuit):
+def apply_amplitude_amplification(qubits: QuantumRegister, circuit: QuantumCircuit, apply_last_h=True):
 
     circuit.h(qubits)
     circuit.x(qubits)
@@ -166,4 +166,5 @@ def apply_amplitude_amplification(qubits: QuantumRegister, circuit: QuantumCircu
     circuit.h(qubits[0])
 
     circuit.x(qubits)
-    circuit.h(qubits)
+    if apply_last_h:
+        circuit.h(qubits)
