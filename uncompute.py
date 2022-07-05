@@ -36,6 +36,7 @@ class Element:
         if type == CHECKPOINT_TYPE:
             return False
         else:
+            assert(self.target is not None)
             if self.gate_name == X:
                 assert(len(self.operands) == 0)
                 circuit.x(self.target)
@@ -53,6 +54,7 @@ class Element:
                 circuit.mcx(self.operands, self.target)
             else:
                 raise Exception(f"Invalid stack element with gate {self.gate_name}")
+        return True
 
 
 class Queue:
@@ -113,3 +115,12 @@ def apply_and_reverse_stack(stack: Stack, circuit: QuantumCircuit):
         stack.push(temp_queue.pop())
 
     assert(stack.size == initial_size)
+
+def get_circuit_queue(stack: Stack):
+
+    result = Queue()
+
+    while not stack.is_empty():
+        result.data_structure.appendleft(stack.pop())
+    result.data_structure.append(Element(CHECKPOINT_TYPE, "", [], None))
+    return result

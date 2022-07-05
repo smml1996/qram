@@ -53,11 +53,11 @@ if generate_with_grover:
 
     # initialize gout in |->
     Instruction.circuit.x(gout)
-    Instruction.circuit.h(gout)
+    #Instruction.circuit.h(gout)
 
     # mark answers
     Instruction.circuit.barrier()
-    Instruction.circuit.cx(result_bad_states[0], gout[0])
+    Instruction.circuit.cz(result_bad_states[0], gout[0])
     Instruction.circuit.barrier()
     # uncompute
     apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
@@ -73,13 +73,13 @@ if generate_with_grover:
 
     print("Grover will need ",iterations, "iterations.")
 
-    for i in range(iterations-1):
+    for i in range(iterations-2):
         # compute
         apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
 
         Instruction.circuit.barrier()
         # mark answers
-        Instruction.circuit.cx(result_bad_states[0], gout[0])
+        Instruction.circuit.cz(result_bad_states[0], gout[0])
         Instruction.circuit.barrier()
         # uncompute
         apply_and_reverse_stack(Instruction.global_stack, Instruction.circuit)
