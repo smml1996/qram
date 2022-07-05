@@ -12,14 +12,14 @@ output_file = sys.argv[3]
 generate_with_grover = int(sys.argv[4])
 
 current_settings = get_btor2_settings(input_file)
-Instruction.all_instructions = read_file(input_file, modify_memory_sort=False, setting=current_settings)
+Instruction.all_instructions = read_file(input_file, modify_memory_sort=True, setting=current_settings)
 
 Instruction.ZERO_CONST = QuantumRegister(1, name="zeroq")
 Instruction.ONE_CONST = QuantumRegister(1, name="oneq")
 Instruction.with_grover = generate_with_grover
-# Instruction.circuit.add_register(Instruction.ZERO_CONST)
-# Instruction.circuit.add_register(Instruction.ONE_CONST)
-# Instruction.circuit.x(Instruction.ONE_CONST)
+# # Instruction.circuit.add_register(Instruction.ZERO_CONST)
+# # Instruction.circuit.add_register(Instruction.ONE_CONST)
+# # Instruction.circuit.x(Instruction.ONE_CONST)
 # Instruction.initialize_memory_addresses()
 for i in range(1, n+1):
     Instruction.current_n = i
@@ -27,6 +27,7 @@ for i in range(1, n+1):
     for instruction in Instruction.all_instructions.values():
         if instruction[1] == INIT and i == 1:
             Instruction(instruction).execute()
+
         elif instruction[1] == NEXT or instruction[1] == BAD:
             Instruction(instruction).execute()
 
@@ -94,5 +95,5 @@ if generate_with_grover:
 
     Instruction.circuit.measure(input_qubits, classical_register)
 
-Instruction.circuit.qasm(filename=output_file,formatted=True)
+Instruction.circuit.qasm(filename=output_file)
 

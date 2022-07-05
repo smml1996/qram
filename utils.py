@@ -22,7 +22,6 @@ def read_file(filename: str, modify_memory_sort: bool = False, setting: Dict[str
 
         temp = cleaned_line.lower().split()
         if len(temp) > 0:
-
             if (int(temp[0]) == 3 or int(temp[0]) == 5) and modify_memory_sort:
                 # this is memory sort. We need to modify this so it matches with our definition of memory
                 memory_size = setting['word_size'] * (setting['size_datasegment'] + setting['size_heap']
@@ -168,3 +167,11 @@ def apply_amplitude_amplification(qubits: QuantumRegister, circuit: QuantumCircu
     circuit.x(qubits)
     if apply_last_h:
         circuit.h(qubits)
+
+def must_target_be_flipped(controls):
+    for c in controls:
+        if c == -1:
+            return False
+        if c == 0:
+            return False
+    return True

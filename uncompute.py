@@ -24,7 +24,7 @@ class Element:
     def __init__(self, element_type, gate_name, controls, target):
         self.element_type = element_type
         self.gate_name = gate_name
-        self.operands = deepcopy(controls)
+        self.operands = controls[:]
         self.target = target
 
     @staticmethod
@@ -116,11 +116,13 @@ def apply_and_reverse_stack(stack: Stack, circuit: QuantumCircuit):
 
     assert(stack.size == initial_size)
 
-def get_circuit_queue(stack: Stack):
+def get_circuit_queue(stack: Stack) -> Queue:
 
     result = Queue()
-
+    result.data_structure.appendleft(Element(CHECKPOINT_TYPE, "", [], None))
     while not stack.is_empty():
-        result.data_structure.appendleft(stack.pop())
-    result.data_structure.append(Element(CHECKPOINT_TYPE, "", [], None))
+        element = stack.pop()
+        assert(element != None)
+        result.data_structure.appendleft(element)
+        result.size += 1
     return result

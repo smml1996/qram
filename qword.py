@@ -23,7 +23,7 @@ class QWord:
         :rtype: object
         """
 
-        self.states = {}  # saves the transformations of qubits. Each element of this array is an array with
+        self.states: Dict[int, (QuantumRegister, List[int])] = {}  # saves the transformations of qubits. Each element of this array is an array with
         # size_in_bits elements. These elements are the names of the qubits that represent
         # this variable in a given transformation.
         self.size_in_bits = size_in_bits
@@ -47,7 +47,7 @@ class QWord:
         self.states[n] = (state, constants)
 
     def create_ancillas(self, n, size, circuit) -> QuantumRegister:
-        self.ancillas[n] = QuantumRegister(size, name="an")
+        self.ancillas[n] = QuantumRegister(size)
         circuit.add_register(self.ancillas[n])
         return self.ancillas[n]
 
@@ -55,13 +55,13 @@ class QWord:
         """
         creates a state with qubits in perfect superposition.
 
-        @param bqm: binary quadratic model to update.
+        @param circuit: binary quadratic model to update.
         @return: the new state created
         """
-        if not set_name:
-            qubits = QuantumRegister(self.size_in_bits)
-        else:
-            qubits = QuantumRegister(self.size_in_bits, self.name)
+        # if not set_name:
+        qubits = QuantumRegister(self.size_in_bits)
+        # else:
+        #     qubits = QuantumRegister(self.size_in_bits, self.name)
         constants = [0 for _ in range(self.size_in_bits)]
         circuit.add_register(qubits)
         self.append_state(qubits, constants, n)

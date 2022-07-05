@@ -1,0 +1,1672 @@
+5259c5259
+< 56598400 and not constant
+---
+> 56598400 and 0
+5271c5271
+< 56600400 and not constant
+---
+> 56600400 and 0
+5294c5294
+< 56604000 and not constant
+---
+> 56604000 and 0
+5310,5311c5310
+< 56606800 and not constant
+< 11 one 1
+---
+> 56606800 and 0
+5313c5312
+< 56606801 ite not constant
+---
+> 56606801 ite 0
+5903c5902
+< 16598400 state not constant
+---
+> 16598400 state 0
+5909c5908
+< 56598400 and not constant
+---
+> 56598400 and 0
+5911c5910
+< 16598400 state not constant
+---
+> 16598400 state 0
+5918c5917
+< 16600400 state not constant
+---
+> 16600400 state 0
+5921c5920
+< 56600400 and not constant
+---
+> 56600400 and 0
+5923c5922
+< 16600400 state not constant
+---
+> 16600400 state 0
+5938c5937
+< 16604000 state not constant
+---
+> 16604000 state 0
+5944c5943
+< 56604000 and not constant
+---
+> 56604000 and 0
+5946c5945
+< 16604000 state not constant
+---
+> 16604000 state 0
+5957c5956
+< 16606800 state not constant
+---
+> 16606800 state 0
+5960,5961c5959
+< 56606800 and not constant
+< 11 one 1
+---
+> 56606800 and 0
+5963c5961
+< 56606801 ite not constant
+---
+> 56606801 ite 0
+5965c5963
+< 16606800 state not constant
+---
+> 16606800 state 0
+6001,6002c5999
+< 16606800 state not constant
+< 200 zero 0
+---
+> 16606800 state 0
+6005,6056c6002
+< 16604000 state not constant
+< 203 state 69640
+< 36604000 constd 4294967288
+< 36604001 add 69632
+< 20001100 constd 4294967292
+< 36604025 eq 0
+< 36604001 add 69632
+< 20001000 constd 4294967288
+< 36604023 eq 0
+< 36604001 add 69632
+< 20000900 constd 4294967284
+< 36604021 eq 0
+< 36604001 add 69632
+< 20000800 constd 4294967280
+< 36604019 eq 0
+< 36604001 add 69632
+< 20000700 constd 4294967276
+< 36604017 eq 0
+< 36604001 add 69632
+< 20000600 constd 4294967272
+< 36604015 eq 0
+< 36604001 add 69632
+< 20000500 constd 4294967268
+< 36604013 eq 0
+< 36604001 add 69632
+< 20000400 constd 4294967264
+< 36604011 eq 0
+< 36604001 add 69632
+< 20000300 constd 4294967260
+< 36604009 eq 0
+< 36604001 add 69632
+< 20000200 constd 73728
+< 36604007 eq 0
+< 36604001 add 69632
+< 20000100 constd 69636
+< 36604005 eq 0
+< 36604001 add 69632
+< 20000000 constd 69632
+< 36604003 eq 1
+< 20000002 state 73728
+< 36604004 ite 73728
+< 36604006 ite 73728
+< 36604008 ite 73728
+< 36604010 ite 73728
+< 36604012 ite 73728
+< 36604014 ite 73728
+< 36604016 ite 73728
+< 36604018 ite 73728
+< 36604020 ite 73728
+< 36604022 ite 73728
+< 36604024 ite 73728
+< 36604026 ite 73728
+---
+> 16604000 state 0
+6059,6098c6005
+< 16600400 state not constant
+< 208 state 4294967264
+< 36600400 constd 4294967292
+< 36600401 add 4294967260
+< 20001100 constd 4294967292
+< 36600425 eq 0
+< 36600401 add 4294967260
+< 20001000 constd 4294967288
+< 36600423 eq 0
+< 36600401 add 4294967260
+< 20000900 constd 4294967284
+< 36600421 eq 0
+< 36600401 add 4294967260
+< 20000800 constd 4294967280
+< 36600419 eq 0
+< 36600401 add 4294967260
+< 20000700 constd 4294967276
+< 36600417 eq 0
+< 36600401 add 4294967260
+< 20000600 constd 4294967272
+< 36600415 eq 0
+< 36600401 add 4294967260
+< 20000500 constd 4294967268
+< 36600413 eq 0
+< 36600401 add 4294967260
+< 20000400 constd 4294967264
+< 36600411 eq 0
+< 36600401 add 4294967260
+< 20000300 constd 4294967260
+< 36600409 eq 1
+< 20000302 state not constant
+< 36600410 ite not constant
+< 36600412 ite not constant
+< 36600414 ite not constant
+< 36600416 ite not constant
+< 36600418 ite not constant
+< 36600420 ite not constant
+< 36600422 ite not constant
+< 36600424 ite not constant
+< 36600426 ite not constant
+---
+> 16600400 state 0
+6100,6139c6007
+< 16598400 state not constant
+< 208 state 4294967264
+< 36598400 constd 4294967292
+< 36598401 add 4294967260
+< 20001100 constd 4294967292
+< 36598425 eq 0
+< 36598401 add 4294967260
+< 20001000 constd 4294967288
+< 36598423 eq 0
+< 36598401 add 4294967260
+< 20000900 constd 4294967284
+< 36598421 eq 0
+< 36598401 add 4294967260
+< 20000800 constd 4294967280
+< 36598419 eq 0
+< 36598401 add 4294967260
+< 20000700 constd 4294967276
+< 36598417 eq 0
+< 36598401 add 4294967260
+< 20000600 constd 4294967272
+< 36598415 eq 0
+< 36598401 add 4294967260
+< 20000500 constd 4294967268
+< 36598413 eq 0
+< 36598401 add 4294967260
+< 20000400 constd 4294967264
+< 36598411 eq 0
+< 36598401 add 4294967260
+< 20000300 constd 4294967260
+< 36598409 eq 1
+< 20000302 state not constant
+< 36598410 ite not constant
+< 36598412 ite not constant
+< 36598414 ite not constant
+< 36598416 ite not constant
+< 36598418 ite not constant
+< 36598420 ite not constant
+< 36598422 ite not constant
+< 36598424 ite not constant
+< 36598426 ite not constant
+---
+> 16598400 state 0
+6484,6485c6352
+< 16604000 state not constant
+< 36604001 add 69632
+---
+> 16604000 state 0
+6488,6489c6355
+< 16600400 state not constant
+< 36600401 add 4294967260
+---
+> 16600400 state 0
+6491,6492c6357
+< 16598400 state not constant
+< 36598401 add 4294967260
+---
+> 16598400 state 0
+6501,6509c6366,6374
+< 36604002 ite not constant
+< 36604402 ite not constant
+< 36606000 ite not constant
+< 36606402 ite not constant
+< 36608400 ite not constant
+< 36609200 ite not constant
+< 42000001 ite not constant
+< 43000001 ite not constant
+< 44000001 ite not constant
+---
+> 36604002 ite 4294967260
+> 36604402 ite 4294967260
+> 36606000 ite 4294967260
+> 36606402 ite 4294967260
+> 36608400 ite 4294967260
+> 36609200 ite 4294967260
+> 42000001 ite 4294967260
+> 43000001 ite 4294967260
+> 44000001 ite 4294967260
+6515c6380
+< 44000001 ite not constant
+---
+> 44000001 ite 4294967260
+6517,6519c6382,6384
+< 80000021 ult not constant
+< 80000022 bad not constant
+< 44000001 ite not constant
+---
+> 80000021 ult 0
+> 80000022 bad 0
+> 44000001 ite 4294967260
+6522c6387
+< 44000001 ite not constant
+---
+> 44000001 ite 4294967260
+6524,6527c6389,6392
+< 80000024 ult not constant
+< 80000025 and not constant
+< 80000026 bad not constant
+< 44000001 ite not constant
+---
+> 80000024 ult 0
+> 80000025 and 0
+> 80000026 bad 0
+> 44000001 ite 4294967260
+6530c6395
+< 44000001 ite not constant
+---
+> 44000001 ite 4294967260
+6532,6535c6397,6400
+< 80000028 ult not constant
+< 80000029 and not constant
+< 80000030 bad not constant
+< 44000001 ite not constant
+---
+> 80000028 ult 0
+> 80000029 and 0
+> 80000030 bad 0
+> 44000001 ite 4294967260
+6538c6403
+< 44000001 ite not constant
+---
+> 44000001 ite 4294967260
+6540,6543c6405,6408
+< 80000032 ult not constant
+< 80000033 and not constant
+< 80000034 bad not constant
+< 44000001 ite not constant
+---
+> 80000032 ult 0
+> 80000033 and 0
+> 80000034 bad 0
+> 44000001 ite 4294967260
+6546c6411
+< 44000001 ite not constant
+---
+> 44000001 ite 4294967260
+6548,6551c6413,6416
+< 80000036 ult not constant
+< 80000037 and not constant
+< 80000038 bad not constant
+< 44000001 ite not constant
+---
+> 80000036 ult 0
+> 80000037 and 0
+> 80000038 bad 0
+> 44000001 ite 4294967260
+6553,6554c6418,6419
+< 80000039 ugt not constant
+< 80000040 bad not constant
+---
+> 80000039 ugt 0
+> 80000040 bad 0
+6670c6535
+< 16598400 state not constant
+---
+> 16598400 state 0
+6676,6678c6541,6543
+< 56598400 and not constant
+< 16598800 state not constant
+< 16598400 state not constant
+---
+> 56598400 and 0
+> 16598800 state 0
+> 16598400 state 0
+6680c6545
+< 16598800 state not constant
+---
+> 16598800 state 0
+6685c6550
+< 16600400 state not constant
+---
+> 16600400 state 0
+6688,6690c6553,6555
+< 56600400 and not constant
+< 16600800 state not constant
+< 16600400 state not constant
+---
+> 56600400 and 0
+> 16600800 state 0
+> 16600400 state 0
+6692c6557
+< 16600800 state not constant
+---
+> 16600800 state 0
+6705c6570
+< 16604000 state not constant
+---
+> 16604000 state 0
+6711,6713c6576,6578
+< 56604000 and not constant
+< 16604400 state not constant
+< 16604000 state not constant
+---
+> 56604000 and 0
+> 16604400 state 0
+> 16604000 state 0
+6715c6580
+< 16604400 state not constant
+---
+> 16604400 state 0
+6724c6589
+< 16606800 state not constant
+---
+> 16606800 state 0
+6727,6728c6592
+< 56606800 and not constant
+< 11 one 1
+---
+> 56606800 and 0
+6730,6732c6594,6596
+< 56606801 ite not constant
+< 16607200 state not constant
+< 16606800 state not constant
+---
+> 56606801 ite 0
+> 16607200 state 0
+> 16606800 state 0
+6734c6598
+< 16607200 state not constant
+---
+> 16607200 state 0
+6768,6769c6632
+< 16606800 state not constant
+< 200 zero 0
+---
+> 16606800 state 0
+6772,6823c6635
+< 16604000 state not constant
+< 203 state 69640
+< 36604000 constd 4294967288
+< 36604001 add 69632
+< 20001100 constd 4294967292
+< 36604025 eq 0
+< 36604001 add 69632
+< 20001000 constd 4294967288
+< 36604023 eq 0
+< 36604001 add 69632
+< 20000900 constd 4294967284
+< 36604021 eq 0
+< 36604001 add 69632
+< 20000800 constd 4294967280
+< 36604019 eq 0
+< 36604001 add 69632
+< 20000700 constd 4294967276
+< 36604017 eq 0
+< 36604001 add 69632
+< 20000600 constd 4294967272
+< 36604015 eq 0
+< 36604001 add 69632
+< 20000500 constd 4294967268
+< 36604013 eq 0
+< 36604001 add 69632
+< 20000400 constd 4294967264
+< 36604011 eq 0
+< 36604001 add 69632
+< 20000300 constd 4294967260
+< 36604009 eq 0
+< 36604001 add 69632
+< 20000200 constd 73728
+< 36604007 eq 0
+< 36604001 add 69632
+< 20000100 constd 69636
+< 36604005 eq 0
+< 36604001 add 69632
+< 20000000 constd 69632
+< 36604003 eq 1
+< 20000002 state 73728
+< 36604004 ite 73728
+< 36604006 ite 73728
+< 36604008 ite 73728
+< 36604010 ite 73728
+< 36604012 ite 73728
+< 36604014 ite 73728
+< 36604016 ite 73728
+< 36604018 ite 73728
+< 36604020 ite 73728
+< 36604022 ite 73728
+< 36604024 ite 73728
+< 36604026 ite 73728
+---
+> 16604000 state 0
+6826,6865c6638
+< 16600400 state not constant
+< 208 state 4294967264
+< 36600400 constd 4294967292
+< 36600401 add 4294967260
+< 20001100 constd 4294967292
+< 36600425 eq 0
+< 36600401 add 4294967260
+< 20001000 constd 4294967288
+< 36600423 eq 0
+< 36600401 add 4294967260
+< 20000900 constd 4294967284
+< 36600421 eq 0
+< 36600401 add 4294967260
+< 20000800 constd 4294967280
+< 36600419 eq 0
+< 36600401 add 4294967260
+< 20000700 constd 4294967276
+< 36600417 eq 0
+< 36600401 add 4294967260
+< 20000600 constd 4294967272
+< 36600415 eq 0
+< 36600401 add 4294967260
+< 20000500 constd 4294967268
+< 36600413 eq 0
+< 36600401 add 4294967260
+< 20000400 constd 4294967264
+< 36600411 eq 0
+< 36600401 add 4294967260
+< 20000300 constd 4294967260
+< 36600409 eq 1
+< 20000302 state not constant
+< 36600410 ite not constant
+< 36600412 ite not constant
+< 36600414 ite not constant
+< 36600416 ite not constant
+< 36600418 ite not constant
+< 36600420 ite not constant
+< 36600422 ite not constant
+< 36600424 ite not constant
+< 36600426 ite not constant
+---
+> 16600400 state 0
+6867,6906c6640
+< 16598400 state not constant
+< 208 state 4294967264
+< 36598400 constd 4294967292
+< 36598401 add 4294967260
+< 20001100 constd 4294967292
+< 36598425 eq 0
+< 36598401 add 4294967260
+< 20001000 constd 4294967288
+< 36598423 eq 0
+< 36598401 add 4294967260
+< 20000900 constd 4294967284
+< 36598421 eq 0
+< 36598401 add 4294967260
+< 20000800 constd 4294967280
+< 36598419 eq 0
+< 36598401 add 4294967260
+< 20000700 constd 4294967276
+< 36598417 eq 0
+< 36598401 add 4294967260
+< 20000600 constd 4294967272
+< 36598415 eq 0
+< 36598401 add 4294967260
+< 20000500 constd 4294967268
+< 36598413 eq 0
+< 36598401 add 4294967260
+< 20000400 constd 4294967264
+< 36598411 eq 0
+< 36598401 add 4294967260
+< 20000300 constd 4294967260
+< 36598409 eq 1
+< 20000302 state not constant
+< 36598410 ite not constant
+< 36598412 ite not constant
+< 36598414 ite not constant
+< 36598416 ite not constant
+< 36598418 ite not constant
+< 36598420 ite not constant
+< 36598422 ite not constant
+< 36598424 ite not constant
+< 36598426 ite not constant
+---
+> 16598400 state 0
+6927,6966c6661
+< 16604400 state not constant
+< 208 state 4294967264
+< 36604400 constd 4294967292
+< 36604401 add 4294967260
+< 20001100 constd 4294967292
+< 36604425 eq 0
+< 36604401 add 4294967260
+< 20001000 constd 4294967288
+< 36604423 eq 0
+< 36604401 add 4294967260
+< 20000900 constd 4294967284
+< 36604421 eq 0
+< 36604401 add 4294967260
+< 20000800 constd 4294967280
+< 36604419 eq 0
+< 36604401 add 4294967260
+< 20000700 constd 4294967276
+< 36604417 eq 0
+< 36604401 add 4294967260
+< 20000600 constd 4294967272
+< 36604415 eq 0
+< 36604401 add 4294967260
+< 20000500 constd 4294967268
+< 36604413 eq 0
+< 36604401 add 4294967260
+< 20000400 constd 4294967264
+< 36604411 eq 0
+< 36604401 add 4294967260
+< 20000300 constd 4294967260
+< 36604409 eq 1
+< 20000302 state not constant
+< 36604410 ite not constant
+< 36604412 ite not constant
+< 36604414 ite not constant
+< 36604416 ite not constant
+< 36604418 ite not constant
+< 36604420 ite not constant
+< 36604422 ite not constant
+< 36604424 ite not constant
+< 36604426 ite not constant
+---
+> 16604400 state 0
+6970,7023c6665,6666
+< 16600800 state not constant
+< 203 state 69640
+< 36600800 constd 4294967288
+< 36600801 add 69632
+< 20001100 constd 4294967292
+< 36600825 eq 0
+< 36600801 add 69632
+< 20001000 constd 4294967288
+< 36600823 eq 0
+< 36600801 add 69632
+< 20000900 constd 4294967284
+< 36600821 eq 0
+< 36600801 add 69632
+< 20000800 constd 4294967280
+< 36600819 eq 0
+< 36600801 add 69632
+< 20000700 constd 4294967276
+< 36600817 eq 0
+< 36600801 add 69632
+< 20000600 constd 4294967272
+< 36600815 eq 0
+< 36600801 add 69632
+< 20000500 constd 4294967268
+< 36600813 eq 0
+< 36600801 add 69632
+< 20000400 constd 4294967264
+< 36600811 eq 0
+< 36600801 add 69632
+< 20000300 constd 4294967260
+< 36600809 eq 0
+< 36600801 add 69632
+< 20000200 constd 73728
+< 36600807 eq 0
+< 36600801 add 69632
+< 20000100 constd 69636
+< 36600805 eq 0
+< 36600801 add 69632
+< 20000000 constd 69632
+< 36600803 eq 1
+< 20000002 state 73728
+< 36600804 ite 73728
+< 36600806 ite 73728
+< 36600808 ite 73728
+< 36600810 ite 73728
+< 36600812 ite 73728
+< 36600814 ite 73728
+< 36600816 ite 73728
+< 36600818 ite 73728
+< 36600820 ite 73728
+< 36600822 ite 73728
+< 36600824 ite 73728
+< 36600826 ite 73728
+< 16598800 state not constant
+< 36598800 constd 1
+---
+> 16600800 state 0
+> 16598800 state 0
+7027,7033c6670,6676
+< 36598801 ite not constant
+< 36600827 ite not constant
+< 36601225 ite not constant
+< 36602001 ite not constant
+< 36602801 ite not constant
+< 36604427 ite not constant
+< 36605201 ite not constant
+---
+> 36598801 ite 48
+> 36600827 ite 48
+> 36601225 ite 48
+> 36602001 ite 48
+> 36602801 ite 48
+> 36604427 ite 48
+> 36605201 ite 48
+7059,7060c6702
+< 16607200 state not constant
+< 205 state not constant
+---
+> 16607200 state 0
+7066,7071c6708,6713
+< 36607200 ite not constant
+< 42000003 ite not constant
+< 42000056 ite not constant
+< 43000002 ite not constant
+< 44000007 ite not constant
+< 45000014 ite not constant
+---
+> 36607200 ite 0
+> 42000003 ite 0
+> 42000056 ite 0
+> 43000002 ite 0
+> 44000007 ite 0
+> 45000014 ite 0
+7308,7311c6950,6951
+< 16604400 state not constant
+< 36604401 add 4294967260
+< 16604000 state not constant
+< 36604001 add 69632
+---
+> 16604400 state 0
+> 16604000 state 0
+7313,7316c6953,6954
+< 16600800 state not constant
+< 36600801 add 69632
+< 16600400 state not constant
+< 36600401 add 4294967260
+---
+> 16600800 state 0
+> 16600400 state 0
+7318,7319c6956
+< 16598400 state not constant
+< 36598401 add 4294967260
+---
+> 16598400 state 0
+7333,7346c6970,6983
+< 36598402 ite not constant
+< 36599602 ite not constant
+< 36600402 ite not constant
+< 36600802 ite not constant
+< 36601200 ite not constant
+< 36604002 ite not constant
+< 36604402 ite not constant
+< 36606000 ite not constant
+< 36606402 ite not constant
+< 36608400 ite not constant
+< 36609200 ite not constant
+< 42000001 ite not constant
+< 43000001 ite not constant
+< 44000001 ite not constant
+---
+> 36598402 ite 69632
+> 36599602 ite 69632
+> 36600402 ite 69632
+> 36600802 ite 69632
+> 36601200 ite 69632
+> 36604002 ite 69632
+> 36604402 ite 69632
+> 36606000 ite 69632
+> 36606402 ite 69632
+> 36608400 ite 69632
+> 36609200 ite 69632
+> 42000001 ite 69632
+> 43000001 ite 69632
+> 44000001 ite 69632
+7352c6989
+< 44000001 ite not constant
+---
+> 44000001 ite 69632
+7354,7356c6991,6993
+< 80000021 ult not constant
+< 80000022 bad not constant
+< 44000001 ite not constant
+---
+> 80000021 ult 0
+> 80000022 bad 0
+> 44000001 ite 69632
+7358,7359c6995,6996
+< 80000023 ugte 1
+< 44000001 ite not constant
+---
+> 80000023 ugte 0
+> 44000001 ite 69632
+7361,7364c6998,7001
+< 80000024 ult not constant
+< 80000025 and not constant
+< 80000026 bad not constant
+< 44000001 ite not constant
+---
+> 80000024 ult 1
+> 80000025 and 0
+> 80000026 bad 0
+> 44000001 ite 69632
+7366,7367c7003,7004
+< 80000027 ugte 1
+< 44000001 ite not constant
+---
+> 80000027 ugte 0
+> 44000001 ite 69632
+7369,7372c7006,7009
+< 80000028 ult not constant
+< 80000029 and not constant
+< 80000030 bad not constant
+< 44000001 ite not constant
+---
+> 80000028 ult 1
+> 80000029 and 0
+> 80000030 bad 0
+> 44000001 ite 69632
+7374,7375c7011,7012
+< 80000031 ugte 1
+< 44000001 ite not constant
+---
+> 80000031 ugte 0
+> 44000001 ite 69632
+7377,7380c7014,7017
+< 80000032 ult not constant
+< 80000033 and not constant
+< 80000034 bad not constant
+< 44000001 ite not constant
+---
+> 80000032 ult 1
+> 80000033 and 0
+> 80000034 bad 0
+> 44000001 ite 69632
+7382,7383c7019,7020
+< 80000035 ugte 1
+< 44000001 ite not constant
+---
+> 80000035 ugte 0
+> 44000001 ite 69632
+7385,7388c7022,7025
+< 80000036 ult not constant
+< 80000037 and not constant
+< 80000038 bad not constant
+< 44000001 ite not constant
+---
+> 80000036 ult 1
+> 80000037 and 0
+> 80000038 bad 0
+> 44000001 ite 69632
+7390,7391c7027,7028
+< 80000039 ugt not constant
+< 80000040 bad not constant
+---
+> 80000039 ugt 0
+> 80000040 bad 0
+7411,7413c7048,7050
+< 210 state not constant
+< 45000003 ulte 1
+< 210 state not constant
+---
+> 210 state 0
+> 45000003 ulte 0
+> 210 state 0
+7415,7417c7052,7054
+< 45000004 ult not constant
+< 45000005 and not constant
+< 210 state not constant
+---
+> 45000004 ult 1
+> 45000005 and 0
+> 210 state 0
+7419c7056
+< 45000006 and not constant
+---
+> 45000006 and 0
+7421,7424c7058,7060
+< 45000007 eq not constant
+< 45000008 and not constant
+< 45000009 and not constant
+< 210 state not constant
+---
+> 45000007 eq 1
+> 45000008 and 0
+> 45000009 and 0
+7426c7062
+< 45000010 ite not constant
+---
+> 45000010 ite 73732
+7432c7068
+< 210 state not constant
+---
+> 210 state 0
+7434,7437c7070,7072
+< 42000014 ult not constant
+< 42000015 and not constant
+< 42000016 and not constant
+< 11 one 1
+---
+> 42000014 ult 1
+> 42000015 and 1
+> 42000016 and 0
+7449c7084
+< 42000057 ite not constant
+---
+> 42000057 ite 0
+7509c7144
+< 16598400 state not constant
+---
+> 16598400 state 0
+7515,7519c7150,7154
+< 56598400 and not constant
+< 16598800 state not constant
+< 16598400 state not constant
+< 16599200 state not constant
+< 16598800 state not constant
+---
+> 56598400 and 0
+> 16598800 state 0
+> 16598400 state 0
+> 16599200 state 0
+> 16598800 state 0
+7521c7156
+< 16599200 state not constant
+---
+> 16599200 state 0
+7524c7159
+< 16600400 state not constant
+---
+> 16600400 state 0
+7527,7531c7162,7166
+< 56600400 and not constant
+< 16600800 state not constant
+< 16600400 state not constant
+< 16601200 state not constant
+< 16600800 state not constant
+---
+> 56600400 and 0
+> 16600800 state 0
+> 16600400 state 0
+> 16601200 state 0
+> 16600800 state 0
+7533c7168
+< 16601200 state not constant
+---
+> 16601200 state 0
+7544c7179
+< 16604000 state not constant
+---
+> 16604000 state 0
+7550,7554c7185,7189
+< 56604000 and not constant
+< 16604400 state not constant
+< 16604000 state not constant
+< 16604800 state not constant
+< 16604400 state not constant
+---
+> 56604000 and 0
+> 16604400 state 0
+> 16604000 state 0
+> 16604800 state 0
+> 16604400 state 0
+7556c7191
+< 16604800 state not constant
+---
+> 16604800 state 0
+7563c7198
+< 16606800 state not constant
+---
+> 16606800 state 0
+7566,7567c7201
+< 56606800 and not constant
+< 11 one 1
+---
+> 56606800 and 0
+7569,7573c7203,7207
+< 56606801 ite not constant
+< 16607200 state not constant
+< 16606800 state not constant
+< 16607600 state not constant
+< 16607200 state not constant
+---
+> 56606801 ite 0
+> 16607200 state 0
+> 16606800 state 0
+> 16607600 state 0
+> 16607200 state 0
+7575c7209
+< 16607600 state not constant
+---
+> 16607600 state 0
+7607,7608c7241
+< 16606800 state not constant
+< 200 zero 0
+---
+> 16606800 state 0
+7611,7662c7244
+< 16604000 state not constant
+< 203 state 69640
+< 36604000 constd 4294967288
+< 36604001 add 69632
+< 20001100 constd 4294967292
+< 36604025 eq 0
+< 36604001 add 69632
+< 20001000 constd 4294967288
+< 36604023 eq 0
+< 36604001 add 69632
+< 20000900 constd 4294967284
+< 36604021 eq 0
+< 36604001 add 69632
+< 20000800 constd 4294967280
+< 36604019 eq 0
+< 36604001 add 69632
+< 20000700 constd 4294967276
+< 36604017 eq 0
+< 36604001 add 69632
+< 20000600 constd 4294967272
+< 36604015 eq 0
+< 36604001 add 69632
+< 20000500 constd 4294967268
+< 36604013 eq 0
+< 36604001 add 69632
+< 20000400 constd 4294967264
+< 36604011 eq 0
+< 36604001 add 69632
+< 20000300 constd 4294967260
+< 36604009 eq 0
+< 36604001 add 69632
+< 20000200 constd 73728
+< 36604007 eq 0
+< 36604001 add 69632
+< 20000100 constd 69636
+< 36604005 eq 0
+< 36604001 add 69632
+< 20000000 constd 69632
+< 36604003 eq 1
+< 20000002 state 73728
+< 36604004 ite 73728
+< 36604006 ite 73728
+< 36604008 ite 73728
+< 36604010 ite 73728
+< 36604012 ite 73728
+< 36604014 ite 73728
+< 36604016 ite 73728
+< 36604018 ite 73728
+< 36604020 ite 73728
+< 36604022 ite 73728
+< 36604024 ite 73728
+< 36604026 ite 73728
+---
+> 16604000 state 0
+7665,7748c7247,7249
+< 16600400 state not constant
+< 208 state 4294967264
+< 36600400 constd 4294967292
+< 36600401 add 4294967260
+< 20001100 constd 4294967292
+< 36600425 eq 0
+< 36600401 add 4294967260
+< 20001000 constd 4294967288
+< 36600423 eq 0
+< 36600401 add 4294967260
+< 20000900 constd 4294967284
+< 36600421 eq 0
+< 36600401 add 4294967260
+< 20000800 constd 4294967280
+< 36600419 eq 0
+< 36600401 add 4294967260
+< 20000700 constd 4294967276
+< 36600417 eq 0
+< 36600401 add 4294967260
+< 20000600 constd 4294967272
+< 36600415 eq 0
+< 36600401 add 4294967260
+< 20000500 constd 4294967268
+< 36600413 eq 0
+< 36600401 add 4294967260
+< 20000400 constd 4294967264
+< 36600411 eq 0
+< 36600401 add 4294967260
+< 20000300 constd 4294967260
+< 36600409 eq 1
+< 20000302 state not constant
+< 36600410 ite not constant
+< 36600412 ite not constant
+< 36600414 ite not constant
+< 36600416 ite not constant
+< 36600418 ite not constant
+< 36600420 ite not constant
+< 36600422 ite not constant
+< 36600424 ite not constant
+< 36600426 ite not constant
+< 16599200 state not constant
+< 205 state not constant
+< 206 state not constant
+< 36599200 sub not constant
+< 16598400 state not constant
+< 208 state 4294967264
+< 36598400 constd 4294967292
+< 36598401 add 4294967260
+< 20001100 constd 4294967292
+< 36598425 eq 0
+< 36598401 add 4294967260
+< 20001000 constd 4294967288
+< 36598423 eq 0
+< 36598401 add 4294967260
+< 20000900 constd 4294967284
+< 36598421 eq 0
+< 36598401 add 4294967260
+< 20000800 constd 4294967280
+< 36598419 eq 0
+< 36598401 add 4294967260
+< 20000700 constd 4294967276
+< 36598417 eq 0
+< 36598401 add 4294967260
+< 20000600 constd 4294967272
+< 36598415 eq 0
+< 36598401 add 4294967260
+< 20000500 constd 4294967268
+< 36598413 eq 0
+< 36598401 add 4294967260
+< 20000400 constd 4294967264
+< 36598411 eq 0
+< 36598401 add 4294967260
+< 20000300 constd 4294967260
+< 36598409 eq 1
+< 20000302 state not constant
+< 36598410 ite not constant
+< 36598412 ite not constant
+< 36598414 ite not constant
+< 36598416 ite not constant
+< 36598418 ite not constant
+< 36598420 ite not constant
+< 36598422 ite not constant
+< 36598424 ite not constant
+< 36598426 ite not constant
+---
+> 16600400 state 0
+> 16599200 state 0
+> 16598400 state 0
+7750c7251
+< 206 state not constant
+---
+> 206 state 48
+7764c7265
+< 206 state not constant
+---
+> 206 state 48
+7766,7805c7267
+< 16604400 state not constant
+< 208 state 4294967264
+< 36604400 constd 4294967292
+< 36604401 add 4294967260
+< 20001100 constd 4294967292
+< 36604425 eq 0
+< 36604401 add 4294967260
+< 20001000 constd 4294967288
+< 36604423 eq 0
+< 36604401 add 4294967260
+< 20000900 constd 4294967284
+< 36604421 eq 0
+< 36604401 add 4294967260
+< 20000800 constd 4294967280
+< 36604419 eq 0
+< 36604401 add 4294967260
+< 20000700 constd 4294967276
+< 36604417 eq 0
+< 36604401 add 4294967260
+< 20000600 constd 4294967272
+< 36604415 eq 0
+< 36604401 add 4294967260
+< 20000500 constd 4294967268
+< 36604413 eq 0
+< 36604401 add 4294967260
+< 20000400 constd 4294967264
+< 36604411 eq 0
+< 36604401 add 4294967260
+< 20000300 constd 4294967260
+< 36604409 eq 1
+< 20000302 state not constant
+< 36604410 ite not constant
+< 36604412 ite not constant
+< 36604414 ite not constant
+< 36604416 ite not constant
+< 36604418 ite not constant
+< 36604420 ite not constant
+< 36604422 ite not constant
+< 36604424 ite not constant
+< 36604426 ite not constant
+---
+> 16604400 state 0
+7808,7912c7270,7272
+< 16601200 state not constant
+< 206 state not constant
+< 20001100 constd 4294967292
+< 36601223 eq 0
+< 206 state not constant
+< 20001000 constd 4294967288
+< 36601221 eq 0
+< 206 state not constant
+< 20000900 constd 4294967284
+< 36601219 eq 0
+< 206 state not constant
+< 20000800 constd 4294967280
+< 36601217 eq 0
+< 206 state not constant
+< 20000700 constd 4294967276
+< 36601215 eq 0
+< 206 state not constant
+< 20000600 constd 4294967272
+< 36601213 eq 0
+< 206 state not constant
+< 20000500 constd 4294967268
+< 36601211 eq 0
+< 206 state not constant
+< 20000400 constd 4294967264
+< 36601209 eq 0
+< 206 state not constant
+< 20000300 constd 4294967260
+< 36601207 eq 0
+< 206 state not constant
+< 20000200 constd 73728
+< 36601205 eq not constant
+< 20000202 state not constant
+< 206 state not constant
+< 20000100 constd 69636
+< 36601203 eq 0
+< 206 state not constant
+< 20000000 constd 69632
+< 36601201 eq 0
+< 20 zero 0
+< 36601202 ite 0
+< 36601204 ite 0
+< 36601206 ite not constant
+< 36601208 ite not constant
+< 36601210 ite not constant
+< 36601212 ite not constant
+< 36601214 ite not constant
+< 36601216 ite not constant
+< 36601218 ite not constant
+< 36601220 ite not constant
+< 36601222 ite not constant
+< 36601224 ite not constant
+< 16600800 state not constant
+< 203 state 69640
+< 36600800 constd 4294967288
+< 36600801 add 69632
+< 20001100 constd 4294967292
+< 36600825 eq 0
+< 36600801 add 69632
+< 20001000 constd 4294967288
+< 36600823 eq 0
+< 36600801 add 69632
+< 20000900 constd 4294967284
+< 36600821 eq 0
+< 36600801 add 69632
+< 20000800 constd 4294967280
+< 36600819 eq 0
+< 36600801 add 69632
+< 20000700 constd 4294967276
+< 36600817 eq 0
+< 36600801 add 69632
+< 20000600 constd 4294967272
+< 36600815 eq 0
+< 36600801 add 69632
+< 20000500 constd 4294967268
+< 36600813 eq 0
+< 36600801 add 69632
+< 20000400 constd 4294967264
+< 36600811 eq 0
+< 36600801 add 69632
+< 20000300 constd 4294967260
+< 36600809 eq 0
+< 36600801 add 69632
+< 20000200 constd 73728
+< 36600807 eq 0
+< 36600801 add 69632
+< 20000100 constd 69636
+< 36600805 eq 0
+< 36600801 add 69632
+< 20000000 constd 69632
+< 36600803 eq 1
+< 20000002 state 73728
+< 36600804 ite 73728
+< 36600806 ite 73728
+< 36600808 ite 73728
+< 36600810 ite 73728
+< 36600812 ite 73728
+< 36600814 ite 73728
+< 36600816 ite 73728
+< 36600818 ite 73728
+< 36600820 ite 73728
+< 36600822 ite 73728
+< 36600824 ite 73728
+< 36600826 ite 73728
+< 16598800 state not constant
+< 36598800 constd 1
+---
+> 16601200 state 0
+> 16600800 state 0
+> 16598800 state 0
+7914,7922c7274,7282
+< 206 state not constant
+< 36597201 ite not constant
+< 36598801 ite not constant
+< 36600827 ite not constant
+< 36601225 ite not constant
+< 36602001 ite not constant
+< 36602801 ite not constant
+< 36604427 ite not constant
+< 36605201 ite not constant
+---
+> 206 state 48
+> 36597201 ite 48
+> 36598801 ite 48
+> 36600827 ite 48
+> 36601225 ite 48
+> 36602001 ite 48
+> 36602801 ite 48
+> 36604427 ite 48
+> 36605201 ite 48
+7924,7925c7284
+< 16604800 state not constant
+< 36604800 constd 4
+---
+> 16604800 state 0
+7929c7288
+< 36604801 ite not constant
+---
+> 36604801 ite 0
+7936c7295
+< 210 state not constant
+---
+> 210 state 0
+7938,7941c7297,7299
+< 45000008 and not constant
+< 45000012 not not constant
+< 45000013 and not constant
+< 45000001 state 73732
+---
+> 45000008 and 0
+> 45000012 not 1
+> 45000013 and 0
+7948,7957c7306
+< 42000016 and not constant
+< 210 state not constant
+< 212 state 1
+< 210 state not constant
+< 42000004 sub not constant
+< 24 constd 4
+< 42000005 ugte 1
+< 24 constd 4
+< 42000006 ite 4
+< 42000055 add not constant
+---
+> 42000016 and 0
+7959,7960c7308
+< 16607200 state not constant
+< 205 state not constant
+---
+> 16607200 state 0
+7963,7971c7311,7319
+< 210 state not constant
+< 36562425 ite not constant
+< 36595200 ite not constant
+< 36607200 ite not constant
+< 42000003 ite not constant
+< 42000056 ite not constant
+< 43000002 ite not constant
+< 44000007 ite not constant
+< 45000014 ite not constant
+---
+> 210 state 0
+> 36562425 ite 0
+> 36595200 ite 0
+> 36607200 ite 0
+> 42000003 ite 0
+> 42000056 ite 0
+> 43000002 ite 0
+> 44000007 ite 0
+> 45000014 ite 0
+8017,8018c7365,7372
+< 42000016 and not constant
+< 42000006 ite 4
+---
+> 42000016 and 0
+> 212 state 1
+> 210 state 0
+> 42000004 sub 1
+> 24 constd 4
+> 42000005 ugte 0
+> 42000004 sub 1
+> 42000006 ite 1
+8021,8031c7375
+< 42000018 and not constant
+< 211 state 73728
+< 210 state not constant
+< 42000013 add not constant
+< 20000000 constd 69632
+< 42000019 eq not constant
+< 42000006 ite 4
+< 24 constd 4
+< 42000011 eq 1
+< 94 input not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8041,8043c7385
+< 42000020 ite not constant
+< 36606405 ite 73728
+< 42000021 ite not constant
+---
+> 42000021 ite 73728
+8045,8049c7387
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000100 constd 69636
+< 42000022 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8059,8061c7397
+< 42000023 ite not constant
+< 36606408 ite 73732
+< 42000024 ite not constant
+---
+> 42000024 ite 73732
+8063,8067c7399
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000200 constd 73728
+< 42000025 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8077,8078d7408
+< 42000026 ite not constant
+< 36606411 ite not constant
+8081,8085c7411
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000300 constd 4294967260
+< 42000028 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8095,8096d7420
+< 42000029 ite not constant
+< 36606414 ite not constant
+8099,8103c7423
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000400 constd 4294967264
+< 42000031 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8113,8115c7433
+< 42000032 ite not constant
+< 36606417 ite 0
+< 42000033 ite not constant
+---
+> 42000033 ite 0
+8117,8121c7435
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000500 constd 4294967268
+< 42000034 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8131,8133c7445
+< 42000035 ite not constant
+< 36606420 ite 65616
+< 42000036 ite not constant
+---
+> 42000036 ite 65616
+8135,8139c7447
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000600 constd 4294967272
+< 42000037 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8149,8151c7457
+< 42000038 ite not constant
+< 36606423 ite 1
+< 42000039 ite not constant
+---
+> 42000039 ite 1
+8153,8157c7459
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000700 constd 4294967276
+< 42000040 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8167,8169c7469
+< 42000041 ite not constant
+< 36606426 ite 4294967280
+< 42000042 ite not constant
+---
+> 42000042 ite 4294967280
+8171,8175c7471
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000800 constd 4294967280
+< 42000043 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8185,8187c7481
+< 42000044 ite not constant
+< 36606429 ite 4294967292
+< 42000045 ite not constant
+---
+> 42000045 ite 4294967292
+8189,8193c7483
+< 42000018 and not constant
+< 42000013 add not constant
+< 20000900 constd 4294967284
+< 42000046 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8203,8205c7493
+< 42000047 ite not constant
+< 36606432 ite 0
+< 42000048 ite not constant
+---
+> 42000048 ite 0
+8207,8211c7495
+< 42000018 and not constant
+< 42000013 add not constant
+< 20001000 constd 4294967288
+< 42000049 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8221,8223c7505
+< 42000050 ite not constant
+< 36606435 ite 0
+< 42000051 ite not constant
+---
+> 42000051 ite 0
+8225,8229c7507
+< 42000018 and not constant
+< 42000013 add not constant
+< 20001100 constd 4294967292
+< 42000052 eq not constant
+< 42000012 ite not constant
+---
+> 42000018 and 0
+8239,8241c7517
+< 42000053 ite not constant
+< 36606438 ite 6499955
+< 42000054 ite not constant
+---
+> 42000054 ite 6499955
+8260c7536
+< 210 state not constant
+---
+> 210 state 0
+8262,8264c7538,7540
+< 80000011 neq not constant
+< 80000012 and not constant
+< 80000013 bad not constant
+---
+> 80000011 neq 0
+> 80000012 and 0
+> 80000013 bad 0
+8280,8289c7556,7560
+< 16604400 state not constant
+< 36604401 add 4294967260
+< 16604000 state not constant
+< 36604001 add 69632
+< 16601200 state not constant
+< 206 state not constant
+< 16600800 state not constant
+< 36600801 add 69632
+< 16600400 state not constant
+< 36600401 add 4294967260
+---
+> 16604400 state 0
+> 16604000 state 0
+> 16601200 state 0
+> 16600800 state 0
+> 16600400 state 0
+8291,8292c7562
+< 16598400 state not constant
+< 36598401 add 4294967260
+---
+> 16598400 state 0
+8306,8319c7576,7589
+< 36598402 ite not constant
+< 36599602 ite not constant
+< 36600402 ite not constant
+< 36600802 ite not constant
+< 36601200 ite not constant
+< 36604002 ite not constant
+< 36604402 ite not constant
+< 36606000 ite not constant
+< 36606402 ite not constant
+< 36608400 ite not constant
+< 36609200 ite not constant
+< 42000001 ite not constant
+< 43000001 ite not constant
+< 44000001 ite not constant
+---
+> 36598402 ite 69632
+> 36599602 ite 69632
+> 36600402 ite 69632
+> 36600802 ite 69632
+> 36601200 ite 69632
+> 36604002 ite 69632
+> 36604402 ite 69632
+> 36606000 ite 69632
+> 36606402 ite 69632
+> 36608400 ite 69632
+> 36609200 ite 69632
+> 42000001 ite 69632
+> 43000001 ite 69632
+> 44000001 ite 69632
+8321c7591
+< 80000018 and not constant
+---
+> 80000018 and 0
+8323,8325c7593,7595
+< 80000019 neq not constant
+< 80000020 bad not constant
+< 44000001 ite not constant
+---
+> 80000019 neq 0
+> 80000020 bad 0
+> 44000001 ite 69632
+8327,8329c7597,7599
+< 80000021 ult not constant
+< 80000022 bad not constant
+< 44000001 ite not constant
+---
+> 80000021 ult 0
+> 80000022 bad 0
+> 44000001 ite 69632
+8331,8332c7601,7602
+< 80000023 ugte 1
+< 44000001 ite not constant
+---
+> 80000023 ugte 0
+> 44000001 ite 69632
+8334,8337c7604,7607
+< 80000024 ult not constant
+< 80000025 and not constant
+< 80000026 bad not constant
+< 44000001 ite not constant
+---
+> 80000024 ult 1
+> 80000025 and 0
+> 80000026 bad 0
+> 44000001 ite 69632
+8339,8340c7609,7610
+< 80000027 ugte 1
+< 44000001 ite not constant
+---
+> 80000027 ugte 0
+> 44000001 ite 69632
+8342,8345c7612,7615
+< 80000028 ult not constant
+< 80000029 and not constant
+< 80000030 bad not constant
+< 44000001 ite not constant
+---
+> 80000028 ult 1
+> 80000029 and 0
+> 80000030 bad 0
+> 44000001 ite 69632
+8347,8348c7617,7618
+< 80000031 ugte 1
+< 44000001 ite not constant
+---
+> 80000031 ugte 0
+> 44000001 ite 69632
+8350,8353c7620,7623
+< 80000032 ult not constant
+< 80000033 and not constant
+< 80000034 bad not constant
+< 44000001 ite not constant
+---
+> 80000032 ult 1
+> 80000033 and 0
+> 80000034 bad 0
+> 44000001 ite 69632
+8355,8356c7625,7626
+< 80000035 ugte 1
+< 44000001 ite not constant
+---
+> 80000035 ugte 0
+> 44000001 ite 69632
+8358,8361c7628,7631
+< 80000036 ult not constant
+< 80000037 and not constant
+< 80000038 bad not constant
+< 44000001 ite not constant
+---
+> 80000036 ult 1
+> 80000037 and 0
+> 80000038 bad 0
+> 44000001 ite 69632
+8363,8364c7633,7634
+< 80000039 ugt not constant
+< 80000040 bad not constant
+---
+> 80000039 ugt 0
+> 80000040 bad 0

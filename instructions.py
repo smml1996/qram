@@ -48,6 +48,21 @@ class Instruction:
     # END static attributes
 
     @staticmethod
+    def clean_static_variables():
+        Instruction.all_instructions = {}
+        Instruction.current_n = 0
+        Instruction.circuit = QuantumCircuit()
+        Instruction.qubits_end_data_segment = None
+        Instruction.qubits_end_heap = None
+        Instruction.addresses_qubits = []
+        Instruction.created_states_ids = {}
+        Instruction.address_to_local_offsets = {}
+        Instruction.bad_states = []
+        Instruction.bad_states_to_line_no = {}
+        Instruction.input_nids = []
+        Instruction.global_stack = Stack()
+
+    @staticmethod
     def set_setting(setting):
         Instruction.ADDRESS_WORD_SIZE = setting['address_word_size']
         Instruction.ADDRESS_STEP_SIZE = setting['address_step_size']
@@ -144,7 +159,7 @@ class Instruction:
             raise Exception(f"Not valid instruction: {self}")
 
     def get_last_qubitset(self, name: str, qword: QWord) -> (QuantumRegister, List[int]):
-        if name in [STATE]:
+        if name in [STATE, INPUT]:
             if self.current_n - 1 in qword.states.keys():
                 return qword[self.current_n - 1]
             else:
@@ -156,8 +171,9 @@ class Instruction:
 
         if name in [NEXT, SORT, INIT]:
             raise Exception(f"Cannot determine prev. state for instruction {self.instruction}")
-
         return qword[self.current_n]
+
+
 
     def get_instruction_at_index(self, index: int) -> List[str]:
         return self.all_instructions[abs(int(self.instruction[index]))]
@@ -171,13 +187,24 @@ class Instruction:
     def get_sort(self):
         return Sort(self.all_instructions[int(self.instruction[2])])
 
+    def raise_error(self, c):
+        pass
+        # print(self.id, self.name, get_decimal_representation(c))
+
     def execute(self) -> Optional[QWord]:
+
         if self.name in [NEXT, SORT, INIT]:
             result = self.specific_subclass.execute()
+
             return result
 
         if isinstance(self.specific_subclass, State):
             result = self.specific_subclass.execute()
+            _, consts = self.get_last_qubitset(STATE, result)
+            if QWord.are_all_constants(consts):
+                self.raise_error(consts)
+            # else:
+            #     print(self.id, self.name, "not constant")
             return result
 
         if self.id in Instruction.created_states_ids.keys():
@@ -185,6 +212,11 @@ class Instruction:
                 # for these values we only access timestep 0. If the id-key exists then dont worry processing.
                 self.specific_subclass.execute()
                 result = Instruction.created_states_ids[self.id]
+                _, consts = self.get_last_qubitset(self.name, result)
+                if QWord.are_all_constants(consts):
+                    self.raise_error(consts)
+                # else:
+                #     print(self.id, self.name, "not constant")
                 return result
 
             if self.current_n in Instruction.created_states_ids[self.id].states.keys():
@@ -199,19 +231,24 @@ class Instruction:
             result_qword = self.specific_subclass.execute()
             assert len(result_qword.states) == 1
             Instruction.created_states_ids[self.id] = result_qword
-
+        _, consts = self.get_last_qubitset(self.name, Instruction.created_states_ids[self.id])
+        if QWord.are_all_constants(consts):
+            self.raise_error(consts)
+        # else:
+        #     print(self.id, self.name, "not constant")
         return Instruction.created_states_ids[self.id]
 
     @staticmethod
     def get_constant_register(c, size):
-        result = []
-        while len(result) < size:
+        # result = []
+        qr = QuantumRegister(size)
+        Instruction.circuit.add_register(qr)
+        for q in qr:
             if c % 2 == 1:
-                result.append(Instruction.ONE_CONST[0])
-            else:
-                result.append(Instruction.ZERO_CONST[0])
-            c /= 2
-        return result
+                Instruction.circuit.x(q)
+                Instruction.global_stack.push(Element(GATE_TYPE, X, [], q))
+            c = c//2
+        return qr
 
     @staticmethod
     def initialize_memory_addresses():
@@ -260,7 +297,9 @@ class Instruction:
         if len(Instruction.bad_states) > 0:
             result = QuantumRegister(1)
             Instruction.circuit.add_register(result)
-            logic_or(Instruction.bad_states, result[0], Instruction.circuit, Instruction.global_stack)
+            consts = [0]
+            logic_or(Instruction.bad_states, result[0], [-1 for _ in Instruction.bad_states] ,consts,
+                     Instruction.circuit, Instruction.global_stack)
             return result  # returns the qubit name
         else:
             print("No bad state qubits!")
@@ -282,8 +321,9 @@ class Init(Instruction):
 
         for (index, qubit_name) in enumerate(qubit_set2):
             assert (constants1[index] != -1)
-            if constants1 != constants2:
+            if constants1[index] != constants2[index]:
                 Instruction.circuit.x(qubit_set1[index])
+                constants1[index] = int((constants1[index]+1) % 2)
 
         qword1.append_state(qubit_set2, constants2, 1)
         return qword1
@@ -303,15 +343,16 @@ class Input(Instruction):
             # # we need a set of qubits for the current timestep
             if not (Instruction.current_n in Instruction.created_states_ids[self.id].states.keys()):
                 qubits, constants = result_qword.create_state(Instruction.circuit, Instruction.current_n)
+                # result_qword.states[Instruction.current_n] = (qubits, get_bit_repr_of_number(49, sort.size_in_bits))
                 for (index, q) in enumerate(qubits):
                     Instruction.circuit.h(q)
                     constants[index] = -1
 
         else:
             # this instruction's id does not exists yet.
-            assert (Instruction.current_n == 1)
             result_qword = QWord(sort.size_in_bits, f"in{self.id}")
             qubits, constants = result_qword.create_state(Instruction.circuit, 1, set_name=True)
+            # result_qword.states[1] = (qubits, get_bit_repr_of_number(49, sort.size_in_bits))
             for (index, q) in enumerate(qubits):
                 Instruction.circuit.h(q)
                 constants[index] = -1
@@ -354,7 +395,7 @@ class State(Instruction):
         if self.is_new():
             sort = self.get_sort()
             qword = sort.execute()
-            qword.name = self.name
+            # qword.name = self.name
 
             # returns a vector full of zeros, we use this to initialize memory with zeros
             bit_representation = get_bit_repr_of_number(0, qword.size_in_bits)
@@ -413,9 +454,9 @@ class Add(Instruction):
         qword_result = QWord(sort, self.name)
         qword_result.create_state(Instruction.circuit, Instruction.current_n)
 
-        if self.instruction[1] == INC or self.instruction[1] == DEC:
+        if self.name == INC or self.name == DEC:
             qword_result.create_ancillas(Instruction.current_n, sort, Instruction.circuit)
-            if self.instruction == INC:
+            if self.name == INC:
                 qword_result.ancillas[Instruction.current_n] = self.get_constant_register(1, sort)
             else:
                 # is decrementing by 1
@@ -425,6 +466,7 @@ class Add(Instruction):
         operand1 = Instruction(self.get_instruction_at_index(3))
         qword1 = operand1.execute()
         qubit_set1, constants1 = self.get_last_qubitset(operand1.name, qword1)
+        consts2 = None
         if self.instruction[1] == ADD:
             operand2 = Instruction(self.get_instruction_at_index(4))
             qword2 = operand2.execute()
@@ -433,10 +475,11 @@ class Add(Instruction):
             operand2 = Instruction(self.get_instruction_at_index(4))
             qword2 = operand2.execute()
             qubit_set2, constants2 = self.get_last_qubitset(operand2.name, qword2)
-            local_stack = optimized_get_twos_complement(qubit_set2, Instruction.circuit, Instruction.global_stack)
+            consts2 = constants2[:]
+            local_stack = optimized_get_twos_complement(qubit_set2, consts2, Instruction.circuit, Instruction.global_stack)
         else:
             qubit_set2 = qword_result.ancillas[Instruction.current_n]
-            if self.instruction == INC:
+            if self.name == INC:
                 constants2 = get_bit_repr_of_number(1, sort)
             else:
                 # is decrementing by 1
@@ -444,12 +487,34 @@ class Add(Instruction):
 
         assert len(qubit_set1) == len(qubit_set2)
         assert len(qubit_set1) == sort
-        optimized_bitwise_add(qubit_set1, qubit_set2, qword_result, constants1, constants2,
-                              Instruction.circuit, Instruction.global_stack, Instruction.current_n)
+
+
         if local_stack is not None:
+            assert(consts2 is not None)
+            optimized_bitwise_add(qubit_set1, qubit_set2, qword_result, constants1, consts2,
+                                  Instruction.circuit, Instruction.global_stack, Instruction.current_n)
             # uncomputes twos complement
             while not local_stack.is_empty():
-                local_stack.pop().apply(Instruction.circuit)
+                element = local_stack.pop()
+                element.apply(Instruction.circuit)
+                Instruction.global_stack.push(element)
+        else:
+            optimized_bitwise_add(qubit_set1, qubit_set2, qword_result, constants1, constants2,
+                                  Instruction.circuit, Instruction.global_stack, Instruction.current_n)
+
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            if self.name != SUB:
+                dec1 = get_decimal_representation(constants1)
+                dec2 = get_decimal_representation(constants2)
+                res = (dec1 + dec2) & (2**len(constants1)-1)
+                assert(res == get_decimal_representation(qword_result[Instruction.current_n][1]))
+            else:
+                dec1 = get_decimal_representation(constants1)
+                dec2 = get_decimal_representation(consts2)
+                res = (dec1 + dec2) & (2**len(constants1)-1)
+                assert ( res == get_decimal_representation(qword_result[Instruction.current_n][1]))
+
+
         return qword_result
 
 
@@ -468,12 +533,16 @@ class Mul(Instruction):
         bitset1, constants1 = self.get_last_qubitset(operand1.name, qword_operand1)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, qword_operand2)
 
-        print("len bitset1", len(bitset1))
         qword_result = QWord(len(bitset1), self.name)
         qword_result.create_state(Instruction.circuit, Instruction.current_n, True)
         qword_result.create_ancillas(Instruction.current_n, len(bitset1), Instruction.circuit)
         optimized_mul(bitset1, bitset2, qword_result, constants1, constants2, Instruction.circuit,
                       qword_result.ancillas[Instruction.current_n], Instruction.global_stack, Instruction.current_n)
+
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert(QWord.are_all_constants(qword_result[Instruction.current_n][1]))
+            assert(get_decimal_representation(constants1) * get_decimal_representation(constants2) ==
+                   get_decimal_representation(qword_result[Instruction.current_n][1]))
         return qword_result
 
 
@@ -505,18 +574,21 @@ class Ite(Instruction):
         assert len(qubit_condition) == 1
 
         result_qword = QWord(sort.size_in_bits)
+        # print(self.instruction)
+        # print(const_condition[0])
         if const_condition[0] != -1:
-            condition_value = Instruction.qubits_to_fix[qubit_condition[0]]
-            if condition_value == 1:
+            if const_condition[0] == 1:
                 true_qword = true_part.execute()  # only execute true part if we actually need it (condition==1)
                 qubitset1, consts1 = self.get_last_qubitset(true_part.name, true_qword)
                 result_qword.append_state(qubitset1, consts1, Instruction.current_n)
+
             else:
                 false_qword = false_part.execute()  # only execute true part if we actually need it (condition==0)
                 qubitset2, consts2 = self.get_last_qubitset(false_part.name, false_qword)
                 result_qword.append_state(qubitset2, consts2, Instruction.current_n)
             return result_qword
 
+        assert(const_condition[0] == -1)
         true_part_qword = true_part.execute()
         true_part_bits, constants_true_part = self.get_last_qubitset(true_part.name, true_part_qword)
 
@@ -609,6 +681,10 @@ class And(Instruction):
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
         optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
                               Instruction.global_stack, Instruction.current_n)
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert(QWord.are_all_constants(result_qword[Instruction.current_n][1]))
+            assert(get_decimal_representation(constants1) & get_decimal_representation(constants2) ==
+                   get_decimal_representation(result_qword[Instruction.current_n][1]))
         return result_qword
 
 
@@ -623,6 +699,9 @@ class Not(Instruction):
         result = QWord(self.get_sort().execute().size_in_bits, self.name)
         res_reg, res_consts = result.create_state(Instruction.circuit, Instruction.current_n)
         optimized_bitwise_not(x, res_reg, constants, res_consts, Instruction.circuit, Instruction.global_stack)
+        if QWord.are_all_constants(constants):
+            for (index,c) in enumerate(constants):
+                assert(res_consts[index] == ((c+1)%2))
         return result
 
 
@@ -642,11 +721,14 @@ class Eq(Instruction):
 
         result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n, True)
-        ancillas = result_qword.create_ancillas(Instruction.current_n, self.get_sort().execute().size_in_bits + 1,
+        ancillas = result_qword.create_ancillas(Instruction.current_n, len(bitset1) + 1,
                                                 Instruction.circuit)
 
         optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                            Instruction.global_stack, Instruction.current_n)
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert((get_decimal_representation(constants1) == get_decimal_representation(constants2))
+                   == result_qword[Instruction.current_n][1][0])
         return result_qword
 
 
@@ -665,7 +747,7 @@ class Neq(Instruction):
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
         result_qword = QWord(1, self.name)
         result_bits, result_constants = result_qword.create_state(Instruction.circuit, Instruction.current_n)
-        ancillas = result_qword.create_ancillas(Instruction.current_n, self.get_sort().execute().size_in_bits + 1,
+        ancillas = result_qword.create_ancillas(Instruction.current_n, len(bitset1) + 1,
                                                 Instruction.circuit)
         Instruction.circuit.x(ancillas[ancillas.size - 1])
         optimized_is_equal(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
@@ -676,6 +758,10 @@ class Neq(Instruction):
         if result_constants[0] != -1:
             result_constants[0] += 1
             result_constants[0] = int(result_constants[0] % 2)
+
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert((get_decimal_representation(constants1) != get_decimal_representation(constants2))
+                   == result_qword[Instruction.current_n][1][0])
         return result_qword
 
 
@@ -697,10 +783,12 @@ class Ult(Instruction):
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
         # ancillas = 2 ancillas to add to each operand to perform substraction, sort to store the addition
         # (we actually need sort+1 to store addition, but we use result_qword to store the MSB).
-        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort, Instruction.circuit)
+        ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + len(bitset1), Instruction.circuit)
         optimized_unsigned_ult(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
                                ancillas, Instruction.global_stack, Instruction.current_n)
-
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert((get_decimal_representation(constants1) < get_decimal_representation(constants2))
+                   == result_qword[Instruction.current_n][1][0])
         return result_qword
 
 
@@ -709,7 +797,7 @@ class Ulte(Instruction):
         super().__init__(instruction)
 
     def execute(self) -> Optional[QWord]:
-        sort = self.get_sort().execute().size_in_bits
+
         operand1 = Instruction(self.get_instruction_at_index(3))
         operand1_qword = operand1.execute()
 
@@ -718,6 +806,8 @@ class Ulte(Instruction):
 
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
+
+        sort = len(bitset1)
 
         result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
@@ -732,6 +822,9 @@ class Ulte(Instruction):
         optimized_unsigned_ulte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                 Instruction.global_stack, Instruction.current_n)
 
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert((get_decimal_representation(constants1) <= get_decimal_representation(constants2))
+                   == result_qword[Instruction.current_n][1][0])
         return result_qword
 
 
@@ -749,7 +842,7 @@ class Ugt(Instruction):
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
 
-        sort = self.get_sort().execute().size_in_bits
+        sort = len(bitset1)
         result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
         # ancillas = 2 ancillas to add to each operand to perform substraction, sort to store the addition
@@ -757,7 +850,9 @@ class Ugt(Instruction):
         ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort, Instruction.circuit)
         optimized_unsigned_ugt(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                Instruction.global_stack, Instruction.current_n)
-
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert((get_decimal_representation(constants1) > get_decimal_representation(constants2))
+                   == result_qword[Instruction.current_n][1][0])
         return result_qword
 
 
@@ -774,7 +869,7 @@ class Ugte(Instruction):
 
         bitset1, constants1 = self.get_last_qubitset(operand1.name, operand1_qword)
         bitset2, constants2 = self.get_last_qubitset(operand2.name, operand2_qword)
-        sort = self.get_sort().execute().size_in_bits
+        sort = len(bitset1)
         result_qword = QWord(1, self.name)
         result_qword.create_state(Instruction.circuit, Instruction.current_n, True)
         # ancillas =
@@ -787,7 +882,9 @@ class Ugte(Instruction):
         ancillas = result_qword.create_ancillas(Instruction.current_n, 2 + sort + 2 + sort +1, Instruction.circuit)
         optimized_unsigned_ugte(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit, ancillas,
                                 Instruction.global_stack, Instruction.current_n)
-
+        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+            assert((get_decimal_representation(constants1) >= get_decimal_representation(constants2))
+                   == result_qword[Instruction.current_n][1][0])
         return result_qword
 
 
@@ -882,12 +979,12 @@ class Bad(Instruction):
         qword_result = QWord(1)
         qword_result.append_state(bad_state_qubits, are_constants, Instruction.current_n)
         assert (len(are_constants) == 1)
-        # if are_constants[0] == -1:
+        if are_constants[0] == -1:
             # only care if this bad state does not evaluates no a concrete value
-        Instruction.bad_states.append(bad_state_qubits[0])
-        Instruction.bad_states_to_line_no[bad_state_qubits[0]] = self.id
-        # else:
-        #     print("bad state value found:", self.name, "->", are_constants[0])
+            Instruction.bad_states.append(bad_state_qubits[0])
+            Instruction.bad_states_to_line_no[bad_state_qubits[0]] = self.id
+        else:
+            print("bad state value found:", self.name, "->", are_constants[0])
         return qword_result
 
 
