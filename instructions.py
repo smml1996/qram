@@ -324,6 +324,7 @@ class Init(Instruction):
             if constants1[index] != constants2[index]:
                 Instruction.circuit.x(qubit_set1[index])
                 constants1[index] = int((constants1[index]+1) % 2)
+                Instruction.global_stack.push(Element(GATE_TYPE, X, [], qubit_set1[index]))
 
         qword1.append_state(qubit_set2, constants2, 1)
         return qword1
@@ -984,7 +985,8 @@ class Bad(Instruction):
             Instruction.bad_states.append(bad_state_qubits[0])
             Instruction.bad_states_to_line_no[bad_state_qubits[0]] = self.id
         else:
-            print("bad state value found:", self.name, "->", are_constants[0])
+            pass
+            # print("bad state value found:", self.name, "->", are_constants[0])
         return qword_result
 
 
