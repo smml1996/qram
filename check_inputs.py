@@ -39,6 +39,7 @@ def check_input(value):
     global circuit_queue
     # we only set the value of the first input the other ones are set to |0>
     qubit_values = dict()
+    assert(len(Instruction.input_nids[0]) == 8)
     for qubit in Instruction.input_nids[0]:
         qubit_values[qubit] = value % 2
         value = value // 2
@@ -78,9 +79,5 @@ def check_input(value):
 
 
 
-
-
-
-
-
-
+for i in range(256):
+    print(f"input: {i} -> {check_input(i)}")
