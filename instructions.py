@@ -682,10 +682,10 @@ class And(Instruction):
         result_qword.create_state(Instruction.circuit, Instruction.current_n)
         optimized_bitwise_and(bitset1, bitset2, result_qword, constants1, constants2, Instruction.circuit,
                               Instruction.global_stack, Instruction.current_n)
-        if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
-            assert(QWord.are_all_constants(result_qword[Instruction.current_n][1]))
-            assert(get_decimal_representation(constants1) & get_decimal_representation(constants2) ==
-                   get_decimal_representation(result_qword[Instruction.current_n][1]))
+        # if QWord.are_all_constants(constants1) and QWord.are_all_constants(constants2):
+        #     assert(QWord.are_all_constants(result_qword[Instruction.current_n][1]))
+        #     assert(get_decimal_representation(constants1) & get_decimal_representation(constants2) ==
+        #            get_decimal_representation(result_qword[Instruction.current_n][1]))
         return result_qword
 
 
@@ -985,8 +985,8 @@ class Bad(Instruction):
             Instruction.bad_states.append(bad_state_qubits[0])
             Instruction.bad_states_to_line_no[bad_state_qubits[0]] = self.id
         else:
-            pass
-            # print("bad state value found:", self.name, "->", are_constants[0])
+            if are_constants[0] == 1:
+                print("true bad state found:", self.name)
         return qword_result
 
 

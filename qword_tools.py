@@ -109,27 +109,12 @@ def optimized_bitwise_and(bitset1: QuantumRegister, bitset2: QuantumRegister, re
     result_bits, result_constants = result_qword[n]
     for i in range(bitset1.size):
         assert(result_constants[i] == 0)
-        if constants1[i] != -1:
-            if constants2[i] != -1:
-                if constants1[i] == constants2[i] and constants1[i] == 1:
-                    result_constants[i] = 1
-                    circuit.x(result_bits[i])
-                    stack.push(Element(GATE_TYPE, X, [], result_bits[i]))
-            else:
-                if constants1 == 0:
-                    pass
-                else:
-                    circuit.cx(bitset2[i], result_bits[i])
-                    stack.push(Element(GATE_TYPE, CX, [bitset2[i]], result_bits[i]))
-                    result_constants[i] = -1
-
-        elif constants2[i] != -1:
-            if constants2[i] == 0:
-                pass
-            else:
-                circuit.cx(bitset1[i], result_bits[i])
-                stack.push(Element(GATE_TYPE, CX, [bitset1[i]], result_bits[i]))
-                result_constants[i] = -1
+        if constants1[i] == 1 and constants2[i] == 1:
+            result_constants[i] = 1
+            circuit.x(result_bits[i])
+            stack.push(Element(GATE_TYPE, X, [], result_bits[i]))
+        elif constants1[i] == 0 or constants2[i] == 0:
+            pass
         else:
             # there are no constants
             circuit.ccx(bitset1[i], bitset2[i], result_bits[i])
