@@ -42,6 +42,8 @@ class QWord:
 
     def append_state(self, state: QuantumRegister, constants:List[int], n: int) -> None:
         assert(len(state) == len(constants))
+        if len(state) != self.size_in_bits:
+            print(len(state), self.size_in_bits)
         assert(len(state) == self.size_in_bits)
         self.last_n = max(n, self.last_n)
         self.states[n] = (state, constants)

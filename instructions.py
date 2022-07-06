@@ -436,6 +436,7 @@ class Next(Instruction):
         qword_future = future_state.execute()  # gets bitvector of the 2nd operand
         if previous_state and future_state:
             qubits, constants = self.get_last_qubitset(future_state.name, qword_future)
+            #print("future length ", len(constants), len(qubits))
             previous_state.append_state(qubits, constants, Instruction.current_n)
         else:
             # if for some reason, evaluating one of the operands returns None we throw an error

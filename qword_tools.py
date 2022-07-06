@@ -30,8 +30,8 @@ def optimized_is_equal(bitset1: QuantumRegister, bitset2: QuantumRegister, resul
                        constants2: List[int], circuit: QuantumCircuit, ancillas: QuantumRegister, stack: Stack,
                        n: int) -> QuantumRegister:
 
-        assert(bitset1.size == bitset2.size)
-        assert(len(ancillas) == bitset1.size+1)
+        assert(len(bitset1)== len(bitset2))
+        assert(len(ancillas) == len(bitset1)+1)
 
         result_bits, result_constants = result_qword[n]
 
@@ -44,7 +44,7 @@ def optimized_is_equal(bitset1: QuantumRegister, bitset2: QuantumRegister, resul
 
         control_qubits = []
 
-        for i in range(bitset1.size):
+        for i in range(len(bitset1)):
             if constants1[i] != -1:
                 if constants2[i] != -1:
                     if constants1[i] != constants2[i]:
